@@ -1,27 +1,107 @@
 package com.rateel.app.di
+
 import android.content.Context
 import androidx.room.Room
 import com.jakewharton.retrofit2.converter.kotlinx.serialization.asConverterFactory
 import com.rateel.app.BuildConfig
-import com.rateel.app.data.local.*
-import com.rateel.app.data.settings.AppSettings
+import com.rateel.app.core.network.NetworkMonitor
+import com.rateel.app.core.network.NetworkStatusProvider
+import com.rateel.app.data.local.AudioTrackDao
+import com.rateel.app.data.local.MushafDao
+import com.rateel.app.data.local.RadioDao
+import com.rateel.app.data.local.RateelDatabase
+import com.rateel.app.data.local.ReciterDao
+import com.rateel.app.data.remote.EmptyQuranAudioRemoteDataSource
+import com.rateel.app.data.remote.EmptyRadioRemoteDataSource
+import com.rateel.app.data.remote.EmptyReciterRemoteDataSource
+import com.rateel.app.data.remote.QuranAudioRemoteDataSource
+import com.rateel.app.data.remote.RadioRemoteDataSource
+import com.rateel.app.data.remote.ReciterRemoteDataSource
+import com.rateel.app.data.repository.LocalAudioRepository
+import com.rateel.app.data.repository.LocalMushafRepository
+import com.rateel.app.data.repository.OfflineRadioRepository
+import com.rateel.app.data.repository.OfflineReciterRepository
+import com.rateel.app.domain.repository.AudioRepository
+import com.rateel.app.domain.repository.MushafRepository
+import com.rateel.app.domain.repository.RadioRepository
+import com.rateel.app.domain.repository.ReciterRepository
+import dagger.Binds
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
+import java.io.File
+import java.util.concurrent.TimeUnit
+import javax.inject.Singleton
 import kotlinx.serialization.json.Json
+import okhttp3.Cache
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
-import java.util.concurrent.TimeUnit
-import javax.inject.Singleton
-@Module @InstallIn(SingletonComponent::class) object AppModule{
-@Provides @Singleton fun db(@ApplicationContext c:Context)=Room.databaseBuilder(c,RateelDatabase::class.java,"rateel.db").build()
-@Provides fun radioDao(db:RateelDatabase)=db.radioDao()
-@Provides fun reciterDao(db:RateelDatabase)=db.reciterDao()
-@Provides @Singleton fun settings(@ApplicationContext c:Context)=AppSettings(c)
-@Provides @Singleton fun okHttp():OkHttpClient=OkHttpClient.Builder().connectTimeout(15,TimeUnit.SECONDS).readTimeout(30,TimeUnit.SECONDS).addInterceptor{chain->chain.proceed(chain.request().newBuilder().header("User-Agent","Rateel-Android/"+BuildConfig.VERSION_NAME).build())}.apply{if(BuildConfig.DEBUG)addInterceptor(HttpLoggingInterceptor().apply{level=HttpLoggingInterceptor.Level.BASIC})}.build()
-@Provides @Singleton fun retrofit(client:OkHttpClient):Retrofit=Retrofit.Builder().baseUrl(BuildConfig.API_BASE_URL).client(client).addConverterFactory(Json{ignoreUnknownKeys=true}.asConverterFactory("application/json".toMediaType())).build()
+
+@Module
+@InstallIn(SingletonComponent::class)
+object AppModule {
+    @Provides
+    @Singleton
+    fun database(@ApplicationContext context: Context): RateelDatabase =
+        Room.databaseBuilder(context, RateelDatabase::class.java, "rateel.db").build()
+
+    @Provides fun radioDao(db: RateelDatabase): RadioDao = db.radioDao()
+    @Provides fun reciterDao(db: RateelDatabase): ReciterDao = db.reciterDao()
+    @Provides fun mushafDao(db: RateelDatabase): MushafDao = db.mushafDao()
+    @Provides fun audioTrackDao(db: RateelDatabase): AudioTrackDao = db.audioTrackDao()
+
+    @Provides
+    @Singleton
+    fun okHttp(@ApplicationContext context: Context): OkHttpClient {
+        val builder = OkHttpClient.Builder()
+            .cache(Cache(File(context.cacheDir, "http_metadata"), 20L * 1024L * 1024L))
+            .connectTimeout(15, TimeUnit.SECONDS)
+            .readTimeout(30, TimeUnit.SECONDS)
+            .retryOnConnectionFailure(true)
+            .addInterceptor { chain ->
+                chain.proceed(
+                    chain.request().newBuilder()
+                        .header("User-Agent", "Rateel-Android/" + BuildConfig.VERSION_NAME)
+                        .build(),
+                )
+            }
+
+        if (BuildConfig.DEBUG) {
+            builder.addInterceptor(
+                HttpLoggingInterceptor().apply {
+                    level = HttpLoggingInterceptor.Level.BASIC
+                },
+            )
+        }
+        return builder.build()
+    }
+
+    @Provides
+    @Singleton
+    fun retrofit(client: OkHttpClient): Retrofit =
+        Retrofit.Builder()
+            .baseUrl(BuildConfig.API_BASE_URL)
+            .client(client)
+            .addConverterFactory(
+                Json { ignoreUnknownKeys = true }
+                    .asConverterFactory("application/json".toMediaType()),
+            )
+            .build()
+}
+
+@Module
+@InstallIn(SingletonComponent::class)
+abstract class BindingsModule {
+    @Binds abstract fun bindNetworkStatus(impl: NetworkMonitor): NetworkStatusProvider
+    @Binds abstract fun bindRadioRemote(impl: EmptyRadioRemoteDataSource): RadioRemoteDataSource
+    @Binds abstract fun bindReciterRemote(impl: EmptyReciterRemoteDataSource): ReciterRemoteDataSource
+    @Binds abstract fun bindQuranAudioRemote(impl: EmptyQuranAudioRemoteDataSource): QuranAudioRemoteDataSource
+    @Binds abstract fun bindRadioRepository(impl: OfflineRadioRepository): RadioRepository
+    @Binds abstract fun bindReciterRepository(impl: OfflineReciterRepository): ReciterRepository
+    @Binds abstract fun bindMushafRepository(impl: LocalMushafRepository): MushafRepository
+    @Binds abstract fun bindAudioRepository(impl: LocalAudioRepository): AudioRepository
 }
