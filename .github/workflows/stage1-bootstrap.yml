@@ -45,7 +45,7 @@ jobs:
           cat .bootstrap/part-* > /tmp/rateel-stage1.b64
           base64 --decode /tmp/rateel-stage1.b64 > /tmp/rateel-stage1.tar.gz
           git switch --orphan stage1-verified
-          git rm -rf .
+          git rm -rf . || true
           tar -xzf /tmp/rateel-stage1.tar.gz -C .
           test -f app/build.gradle.kts
           test -f app/src/main/AndroidManifest.xml
