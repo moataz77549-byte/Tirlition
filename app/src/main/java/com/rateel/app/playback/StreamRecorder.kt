@@ -1,14 +1,11 @@
 package com.rateel.app.playback
 
 import com.rateel.app.domain.model.ContentSource
-import com.rateel.app.domain.model.SourceRightsPolicy
 import com.rateel.app.domain.model.RightsAction
+import com.rateel.app.domain.model.SourceRightsPolicy
 import com.rateel.app.domain.model.StreamEndpoint
 
-enum class RecordingMode {
-    MANUAL,
-    FIXED_DURATION,
-}
+enum class RecordingMode { MANUAL, FIXED_DURATION }
 
 data class RecordingRequest(
     val stationId: String,
@@ -23,8 +20,13 @@ sealed interface RecordingCapability {
     data class Unsupported(val reason: String) : RecordingCapability
 }
 
+object RecordingDurations {
+    val supportedMinutes = listOf(5, 10, 15, 30)
+}
+
 /**
- * Future stream recorder boundary. Implementations record network stream bytes, never microphone audio.
+ * Future stream recorder boundary. Implementations save network stream bytes and never capture
+ * microphone audio. Unsupported formats remain playable; only recording is denied.
  */
 interface StreamRecorder {
     fun capability(endpoint: StreamEndpoint): RecordingCapability
