@@ -52,6 +52,9 @@ jobs:
           test -f .github/workflows/android-ci.yml
           sed -i '/android-actions\/setup-android@v3/d' .github/workflows/android-ci.yml
           sed -i 's#run: yes | sdkmanager "platforms;android-36" "build-tools;36.0.0"#run: yes | "$ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager" "platforms;android-36" "build-tools;36.0.0"#' .github/workflows/android-ci.yml
+          sed -i 's/minSdk = 23/minSdk = 24/' app/build.gradle.kts
+          sed -i 's/| `minSdk` | 23 | Broad compatibility and the current Hilt minimum. |/| `minSdk` | 24 | Required by current Navigation 2.10.x while retaining Android 7.0+ compatibility. |/' README.md
+          sed -i 's/- minSdk 23: current Hilt 2.60 has a minimum SDK of 23 and this still covers a broad device range./- minSdk 24: current Navigation 2.10.x requires API 24; this retains Android 7.0+ compatibility without unsafe manifest overrides./' docs/ARCHITECTURE.md
 
       - name: Generate Gradle wrapper
         shell: bash
