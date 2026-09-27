@@ -28,15 +28,19 @@ import kotlinx.coroutines.flow.map
 private fun com.rateel.app.data.local.RadioWithStreams.toDomain(): RadioStation =
     RadioStation(
         id = station.id,
+        sourceId = station.sourceId,
+        canonicalKey = station.canonicalKey,
         nameArabic = station.nameArabic,
         nameEnglish = station.nameEnglish,
         description = station.description,
         streams = streams.sortedByDescending { it.isPrimary }.map {
             StreamEndpoint(
+                sourceId = it.sourceId,
                 url = it.url,
                 format = it.format,
                 bitrateKbps = it.bitrateKbps,
                 primary = it.isPrimary,
+                providerEndpointId = it.providerEndpointId,
             )
         },
         logoUrl = station.logoUrl,
@@ -67,6 +71,8 @@ class OfflineRadioRepository @Inject constructor(
                 val stations = result.data.map {
                     RadioEntity(
                         id = it.id,
+                        sourceId = it.sourceId,
+                        canonicalKey = it.canonicalKey,
                         nameArabic = it.nameArabic,
                         nameEnglish = it.nameEnglish,
                         description = it.description,
@@ -86,8 +92,10 @@ class OfflineRadioRepository @Inject constructor(
                 val streams = result.data.flatMap { station ->
                     station.streams.mapIndexed { index, stream ->
                         RadioStreamEntity(
-                            id = station.id + ":" + index,
+                            id = station.id + ":" + (stream.providerEndpointId ?: index.toString()),
                             radioId = station.id,
+                            sourceId = stream.sourceId,
+                            providerEndpointId = stream.providerEndpointId,
                             url = stream.url,
                             format = stream.format,
                             bitrateKbps = stream.bitrateKbps,
@@ -113,6 +121,7 @@ class OfflineReciterRepository @Inject constructor(
             items.map {
                 Reciter(
                     id = it.id,
+                    sourceId = it.sourceId,
                     nameArabic = it.nameArabic,
                     nameEnglish = it.nameEnglish,
                     photoUrl = it.photoUrl,
@@ -130,6 +139,7 @@ class OfflineReciterRepository @Inject constructor(
                     result.data.map {
                         ReciterEntity(
                             id = it.id,
+                            sourceId = it.sourceId,
                             nameArabic = it.nameArabic,
                             nameEnglish = it.nameEnglish,
                             photoUrl = it.photoUrl,
@@ -155,6 +165,7 @@ class LocalMushafRepository @Inject constructor(
             items.map {
                 Mushaf(
                     id = it.id,
+                    sourceId = it.sourceId,
                     reciterId = it.reciterId,
                     name = it.name,
                     riwaya = it.riwaya,
@@ -178,6 +189,7 @@ class LocalAudioRepository @Inject constructor(
             items.map {
                 SurahAudio(
                     id = it.id,
+                    sourceId = it.sourceId,
                     mushafId = it.mushafId,
                     surahNumber = it.surahNumber,
                     surahNameArabic = it.surahNameArabic,
