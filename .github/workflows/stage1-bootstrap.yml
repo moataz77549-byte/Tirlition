@@ -1,0 +1,109 @@
+name: Stage 1 verified bootstrap
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - ".github/workflows/stage1-bootstrap.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  bootstrap:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Checkout bootstrap payload
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install Android SDK 36
+        run: yes | sdkmanager "platforms;android-36" "build-tools;36.0.0"
+
+      - name: Set up Gradle 9.6
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: "9.6.0"
+
+      - name: Restore Rateel source snapshot
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat .bootstrap/part-* > /tmp/rateel-stage1.b64
+          base64 --decode /tmp/rateel-stage1.b64 > /tmp/rateel-stage1.tar.gz
+          git switch --orphan stage1-verified
+          git rm -rf .
+          tar -xzf /tmp/rateel-stage1.tar.gz -C .
+          test -f app/build.gradle.kts
+          test -f app/src/main/AndroidManifest.xml
+          test -f .github/workflows/android-ci.yml
+
+      - name: Generate Gradle wrapper
+        shell: bash
+        run: |
+          set -euo pipefail
+          gradle wrapper --gradle-version 9.6.0 --distribution-type bin
+          chmod +x gradlew
+          ./gradlew --version
+
+      - name: Pre-push secret audit
+        shell: bash
+        run: |
+          set -euo pipefail
+          if grep -R -nE '(sb_secret_|AKIA[0-9A-Z]{16}|-----BEGIN (RSA|EC|OPENSSH|PRIVATE) KEY-----)' . \
+            --exclude-dir=.git --exclude-dir=.gradle --exclude-dir=build --exclude-dir=.github; then
+            echo "Potential secret detected. Refusing to publish."
+            exit 1
+          fi
+          if grep -R -n 'sb_publishable_KhCxa6BBOarfpUR3RYDjWw_tr9bnEsW' . \
+            --exclude-dir=.git --exclude-dir=.gradle --exclude-dir=build; then
+            echo "Provided Supabase key was accidentally included in source."
+            exit 1
+          fi
+
+      - name: Test, lint, and build
+        shell: bash
+        run: |
+          set -euo pipefail
+          ./gradlew --no-daemon :app:testDebugUnitTest :app:lintDebug :app:assembleDebug
+          find app/schemas -type f -name '*.json' -print
+          test "$(find app/schemas -type f -name '*.json' | wc -l)" -ge 1
+
+      - name: Publish verified logical commits
+        shell: bash
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          git add .gitignore app build.gradle.kts gradle.properties gradle settings.gradle.kts
+          git reset -- app/src/test
+          git commit -m "feat: establish Rateel Android foundation"
+          git push --force origin HEAD:main
+          test "$(git ls-remote origin refs/heads/main | cut -f1)" = "$(git rev-parse HEAD)"
+
+          git add app/src/test .github/workflows/android-ci.yml
+          git commit -m "test: add foundation verification and Android CI"
+          git push origin HEAD:main
+          test "$(git ls-remote origin refs/heads/main | cut -f1)" = "$(git rev-parse HEAD)"
+
+          git add README.md docs
+          git commit -m "docs: document Rateel architecture"
+          git push origin HEAD:main
+          test "$(git ls-remote origin refs/heads/main | cut -f1)" = "$(git rev-parse HEAD)"
+
+          test -z "$(git status --porcelain)"
+          git log --oneline --decorate -5
