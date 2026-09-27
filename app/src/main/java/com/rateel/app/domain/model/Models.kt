@@ -78,22 +78,3 @@ data class SurahAudio(
     val downloadable: Boolean = true,
     val metadata: Map<String, String> = emptyMap(),
 )
-
-data class LocalRecording(
-    val id: String,
-    val stationId: String,
-    val sourceId: String,
-    val stationName: String,
-    val title: String,
-    val filePath: String,
-    val mimeType: String,
-    val durationMs: Long?,
-    val fileSizeBytes: Long?,
-    val startedAt: Long,
-    val finishedAt: Long?,
-    val recordingMode: String,
-    val requestedDurationMs: Long?,
-    val artwork: String?,
-    val sourceAttribution: String?,
-    val createdAt: Long,
-)
