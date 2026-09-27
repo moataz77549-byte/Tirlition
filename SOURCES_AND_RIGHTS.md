@@ -1,95 +1,75 @@
 # Rateel sources and rights registry
 
-This file is the technical and legal registry for external content used by Rateel.
+This file is the technical/legal registry for external content used by Rateel. A source is not a production source merely because an API or stream is public. Unknown capabilities are denied by default.
 
-A provider is **not a production source** merely because an API or public stream is reachable. Before production enablement, its source record must document provenance, rights, attribution, and allowed capabilities. Unknown rights are treated as denied.
-
-## Production gate
-
-Every external RadioStation, StreamEndpoint, Reciter, Mushaf, and SurahAudio must carry a non-empty `sourceId`. A source must exist in the local/remote source registry before dependent content is accepted.
-
-Runtime behavior is controlled by both rights and remote switches:
-
-- streaming requires verified source rights + `allowStreaming` + `streamingEnabled`
-- downloading requires verified source rights + `allowDownload` + `downloadEnabled`
-- offline playback additionally requires `allowOfflinePlayback`
-- recording requires `allowRecording` + `recordingEnabled`
-- sharing requires `allowSharing` + `sharingEnabled`
-- disabling a source remotely must block all dependent actions without a new APK
-
-Downloaded files and local recordings retain `sourceId` plus a rights snapshot/attribution record.
+Last review: **2026-09-28**.
 
 ## mp3quran-v3
 
 - **Source ID:** `mp3quran-v3`
 - **Provider:** MP3Quran.net
-- **Status:** planned primary v1 catalog source; production rights not yet approved
-- **Content types:** radios, reciters, mushafs/riwayat, surah audio metadata, live-TV metadata
+- **Content types:** radios, reciters, mushafs/riwayat, available surahs, Quran audio URLs, and supported live metadata.
 - **API:** https://www.mp3quran.net/api/v3/
 - **Official documentation:** https://www.mp3quran.net/ar/api/2
-- **Terms / copyright:** no sufficiently explicit production-use terms have been recorded in this repository yet
-- **Streaming permission:** not enabled until rights review is completed
-- **Download permission:** not enabled until rights review is completed
-- **Recording permission:** not enabled until rights review is completed
-- **Offline playback permission:** not enabled until rights review is completed
-- **Required attribution:** unknown; do not guess
-- **Date technically verified:** 2026-09-28
-- **Date rights verified:** not yet verified
-- **Implementation notes:** API v3 documents reciters/mushafs and radio endpoints. Provider data must be normalized through adapters; no UI calls the API directly.
+- **Rights statement:** https://www.mp3quran.net/privacy-en.html
+- **Additional official statement:** https://www.mp3quran.net/eng/contact-us
+- **Streaming:** allowed in Rateel policy.
+- **Download / offline playback:** allowed for provider material under the reviewed statement permitting copying site material; downstream items must still preserve their own provenance.
+- **Caching / offline sync:** allowed.
+- **Recording:** not explicitly verified; disabled.
+- **Sharing downloaded media files:** not explicitly verified; disabled. Sharing provider URLs is not treated as unrestricted media redistribution.
+- **Commercial use:** not explicitly verified; disabled.
+- **Required attribution:** no explicit mandatory attribution found in the reviewed statement; Rateel still preserves source identity.
+- **Rights checked:** 2026-09-28.
+- **Technical check:** 2026-09-28.
+- **Implementation:** planned primary v1 provider; actual API integration starts in milestone 2, not hard-coded UI data.
 
 ## qurango-streams
 
 - **Source ID:** `qurango-streams`
-- **Provider:** Qurango.net
-- **Status:** planned stream-transport source; production rights not yet approved
-- **Content types:** radio stream endpoints referenced by MP3Quran v3
-- **API / documentation:** no independent Rateel integration is enabled
-- **Terms / copyright:** not yet verified
-- **Streaming permission:** not enabled until rights review is completed
-- **Download permission:** not enabled
-- **Recording permission:** not enabled
-- **Offline playback permission:** not enabled
-- **Required attribution:** unknown
-- **Date technically verified:** 2026-09-28 through current MP3Quran v3 radio responses
-- **Date rights verified:** not yet verified
-- **Implementation notes:** a station can retain MP3Quran catalog provenance while its StreamEndpoint is tagged `qurango-streams`. Canonical station IDs prevent duplicate stations when multiple endpoints represent the same station.
+- **Provider:** MP3Quran.net / Qurango.net
+- **Content types:** live radio endpoints returned by MP3Quran.
+- **Website:** https://qurango.net/
+- **Relevant official policy:** https://www.mp3quran.net/privacy-en.html
+- **Rights status:** MP3Quran's published policy states it also applies to Qurango.net.
+- **Streaming:** allowed.
+- **Recording:** not explicitly verified; disabled.
+- **Download / offline playback:** disabled for ordinary live endpoints.
+- **Sharing files / commercial use:** not explicitly verified; disabled.
+- **Rights checked:** 2026-09-28.
+- **Implementation:** station catalog provenance and stream transport provenance are separate; a Qurango endpoint receives its own `sourceId`.
 
 ## quran-foundation
 
 - **Source ID:** `quran-foundation`
 - **Provider:** Quran Foundation
-- **Status:** rights terms reviewed; Android integration remains disabled until production access/content-specific review is complete
-- **Content types:** Quran content APIs, including recitation metadata/content where granted
-- **API documentation:** https://api-docs.quran.foundation/
-- **Developer terms:** https://api-docs.quran.foundation/legal/developer-terms/
-- **Terms last updated by provider:** 2026-09-14
-- **Date verified by Rateel:** 2026-09-28
-- **Attribution:** `Quran data provided by Quran Foundation.`
-- **Caching/offline rule:** standard QF content may not be cached/stored longer than one week unless QF expressly permits longer storage or the content is covered by the documented Content Sync exception; Content Sync must be refreshed at least every 7 days.
-- **Mobile secrets:** client credentials/client_secret must never ship in the APK. Secret-bearing authentication belongs on a Rateel backend.
-- **Streaming/in-app use:** provider terms permit in-app use/display subject to the terms and content-specific licenses; operational streaming stays disabled until Rateel production access is approved.
-- **Download / offline files:** user-visible downloadable audio remains disabled until the relevant content-specific rights are confirmed.
-- **Recording:** not enabled.
-- **Sharing:** raw content/file sharing is not enabled. Provider terms distinguish certain attributed social-media uses from redistribution; Rateel must not generalize that into unrestricted file sharing.
-- **Commercial use:** the terms permit monetized applications under conditions, but selling/sublicensing/redistributing QF content or raw API data requires separate written licensing.
-- **Implementation notes:** use an independent adapter behind the Rateel backend/gateway. Never place a QF client_secret in Android code or GitHub.
+- **API:** https://apis.quran.foundation/
+- **Documentation:** https://api-docs.quran.com/
+- **Developer terms:** https://api-docs.quran.com/legal/developer-terms/
+- **Content Sync:** https://api-docs.quran.com/docs/tutorials/content-sync/getting-started/
+- **Streaming / in-app use:** permitted subject to provider terms and the exact production content scope.
+- **Generic caching:** no longer than one week unless an explicit exception applies.
+- **Offline sync:** supported for documented Content Sync resource groups; periodic sync is required.
+- **User-export/download:** disabled until the exact resource/use is confirmed.
+- **Recording:** disabled.
+- **Raw content redistribution/sharing:** disabled.
+- **Commercial application:** provider terms allow monetized applications under conditions, while selling/sublicensing/redistributing QF content or raw API data requires separate licensing.
+- **Attribution:** Rateel conservatively requires provider attribution and will also honor resource-specific requirements.
+- **Credential rule:** never ship a Content API `client_secret` in the APK; confidential access goes through a Rateel backend.
+- **Rights checked:** 2026-09-28.
+- **Operational status:** built-in record stays disabled until backend proxy/configuration and the exact content scope are approved.
 
 ## Official broadcasters
 
-Each broadcaster must receive its own Source ID and rights entry before production. A publicly reachable stream only establishes technical availability. It does **not** establish recording, downloading, redistribution, or sharing rights.
+Saudi Quran radio, Makkah Quran broadcasts, Madinah/Sunnah broadcasts, and other official stations require their own Source IDs and rights records before production enablement. Public stream availability does not prove permission to record, download, redistribute, or share.
 
-Until verified, such sources are streaming-disabled in production rather than guessed to be permissive.
+## Enforcement rules
 
-## Change procedure
-
-Before enabling a new source:
-
-1. Add/update this registry entry.
-2. Verify official documentation, terms, copyright/license, and attribution.
-3. Record `lastRightsCheckAt` and technical verification date.
-4. Set only capabilities that are actually supported by evidence.
-5. Add/update the runtime `ContentSource` record and remote switches.
-6. Add tests for any special policy.
-7. Run tests, lint, build, commit, push, and verify the remote commit.
-
-Never use “available on the internet” as rights evidence.
+1. Every external `RadioStation`, `StreamEndpoint`, `Reciter`, `Mushaf`, and `SurahAudio` carries a non-empty `sourceId`.
+2. Runtime actions consult `SourceRightsPolicy`; hiding a button is not the only enforcement layer.
+3. Download metadata preserves `sourceId`, remote URL, local URI, content identity, checksum, download date, and a rights snapshot.
+4. Fallbacks may represent only the same canonical media identity and must pass the rights policy of the fallback source.
+5. Runtime policy can disable a source or individual capability without a new APK.
+6. App-private managed storage is the default for downloads and recordings.
+7. Recording means saving stream bytes, never microphone capture.
+8. Provider-rights changes require updating this registry and runtime policy before enabling new behavior.

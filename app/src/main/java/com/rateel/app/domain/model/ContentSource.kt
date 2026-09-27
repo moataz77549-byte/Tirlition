@@ -1,21 +1,8 @@
 package com.rateel.app.domain.model
 
-enum class SourceType {
-    API,
-    RADIO_DIRECTORY,
-    OFFICIAL_BROADCASTER,
-    CONTENT_PROVIDER,
-    OTHER,
-}
+enum class SourceType { API, RADIO_DIRECTORY, OFFICIAL_BROADCASTER, CONTENT_PROVIDER, OTHER }
 
-enum class LicenseType {
-    UNKNOWN,
-    PROVIDER_TERMS,
-    WRITTEN_PERMISSION,
-    OPEN_LICENSE,
-    PUBLIC_DOMAIN,
-    CUSTOM,
-}
+enum class LicenseType { UNKNOWN, PROVIDER_TERMS, WRITTEN_PERMISSION, OPEN_LICENSE, PUBLIC_DOMAIN, CUSTOM }
 
 data class ContentSource(
     val id: String,
@@ -33,6 +20,8 @@ data class ContentSource(
     val allowStreaming: Boolean = false,
     val allowDownload: Boolean = false,
     val allowOfflinePlayback: Boolean = false,
+    val allowCaching: Boolean = false,
+    val allowOfflineSync: Boolean = false,
     val allowRecording: Boolean = false,
     val allowSharing: Boolean = false,
     val allowCommercialUse: Boolean = false,
@@ -47,19 +36,14 @@ data class ContentSource(
     val streamingEnabled: Boolean = true,
     val downloadEnabled: Boolean = true,
     val offlinePlaybackEnabled: Boolean = true,
+    val cachingEnabled: Boolean = true,
+    val offlineSyncEnabled: Boolean = true,
     val recordingEnabled: Boolean = true,
     val sharingEnabled: Boolean = true,
     val disabledReason: String? = null,
 )
 
-enum class RightsAction {
-    STREAM,
-    DOWNLOAD,
-    OFFLINE_PLAYBACK,
-    RECORD,
-    SHARE,
-    COMMERCIAL_USE,
-}
+enum class RightsAction { STREAM, DOWNLOAD, OFFLINE_PLAYBACK, CACHE, OFFLINE_SYNC, RECORD, SHARE, COMMERCIAL_USE }
 
 data class RightsDecision(
     val allowed: Boolean,
@@ -69,21 +53,16 @@ data class RightsDecision(
 )
 
 object SourceRightsPolicy {
-    fun evaluate(
-        source: ContentSource,
-        action: RightsAction,
-    ): RightsDecision {
-        if (!source.isEnabled) {
-            return denied(source, source.disabledReason ?: "source_disabled")
-        }
-        if (!source.isVerified) {
-            return denied(source, "source_not_verified")
-        }
+    fun evaluate(source: ContentSource, action: RightsAction): RightsDecision {
+        if (!source.isEnabled) return denied(source, source.disabledReason ?: "source_disabled")
+        if (!source.isVerified) return denied(source, "source_not_verified")
 
         val remotelyEnabled = when (action) {
             RightsAction.STREAM -> source.streamingEnabled
             RightsAction.DOWNLOAD -> source.downloadEnabled
             RightsAction.OFFLINE_PLAYBACK -> source.offlinePlaybackEnabled
+            RightsAction.CACHE -> source.cachingEnabled
+            RightsAction.OFFLINE_SYNC -> source.offlineSyncEnabled
             RightsAction.RECORD -> source.recordingEnabled
             RightsAction.SHARE -> source.sharingEnabled
             RightsAction.COMMERCIAL_USE -> true
@@ -93,30 +72,23 @@ object SourceRightsPolicy {
         val rightsAllowed = when (action) {
             RightsAction.STREAM -> source.allowStreaming
             RightsAction.DOWNLOAD -> source.allowDownload
-            RightsAction.OFFLINE_PLAYBACK ->
-                source.allowDownload && source.allowOfflinePlayback
+            RightsAction.OFFLINE_PLAYBACK -> source.allowOfflinePlayback
+            RightsAction.CACHE -> source.allowCaching
+            RightsAction.OFFLINE_SYNC -> source.allowOfflineSync
             RightsAction.RECORD -> source.allowRecording
             RightsAction.SHARE -> source.allowSharing
             RightsAction.COMMERCIAL_USE -> source.allowCommercialUse
         }
 
         return if (rightsAllowed) {
-            RightsDecision(
-                allowed = true,
-                attributionRequired = source.requiresAttribution,
-                maxOfflineRetentionDays = source.maxOfflineRetentionDays,
-            )
+            RightsDecision(true, source.requiresAttribution, source.maxOfflineRetentionDays)
         } else {
             denied(source, "action_not_permitted")
         }
     }
 
-    private fun denied(source: ContentSource, reason: String) = RightsDecision(
-        allowed = false,
-        attributionRequired = source.requiresAttribution,
-        maxOfflineRetentionDays = source.maxOfflineRetentionDays,
-        reason = reason,
-    )
+    private fun denied(source: ContentSource, reason: String) =
+        RightsDecision(false, source.requiresAttribution, source.maxOfflineRetentionDays, reason)
 }
 
 object SourceIds {

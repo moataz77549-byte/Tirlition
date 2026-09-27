@@ -11,6 +11,7 @@ import kotlinx.coroutines.flow.Flow
 interface SourceRepository {
     fun observeSources(): Flow<List<ContentSource>>
     suspend fun getSource(id: String): ContentSource?
+    suspend fun ensureBuiltInCatalog()
 }
 
 interface RadioRepository {

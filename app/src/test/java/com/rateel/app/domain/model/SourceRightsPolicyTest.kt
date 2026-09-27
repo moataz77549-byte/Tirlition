@@ -9,6 +9,8 @@ class SourceRightsPolicyTest {
         allowStreaming: Boolean = true,
         allowDownload: Boolean = false,
         allowOfflinePlayback: Boolean = false,
+        allowCaching: Boolean = false,
+        allowOfflineSync: Boolean = false,
         allowRecording: Boolean = false,
     ) = ContentSource(
         id = "test-source",
@@ -19,40 +21,30 @@ class SourceRightsPolicyTest {
         allowStreaming = allowStreaming,
         allowDownload = allowDownload,
         allowOfflinePlayback = allowOfflinePlayback,
+        allowCaching = allowCaching,
+        allowOfflineSync = allowOfflineSync,
         allowRecording = allowRecording,
     )
 
-    @Test
-    fun unverified_source_denies_even_explicit_permission() {
-        val source = verifiedSource().copy(isVerified = false)
-        assertFalse(SourceRightsPolicy.evaluate(source, RightsAction.STREAM).allowed)
+    @Test fun unverified_source_denies_even_explicit_permission() {
+        assertFalse(SourceRightsPolicy.evaluate(verifiedSource().copy(isVerified = false), RightsAction.STREAM).allowed)
     }
 
-    @Test
-    fun recording_is_independent_from_streaming_permission() {
+    @Test fun recording_is_independent_from_streaming_permission() {
         val source = verifiedSource(allowStreaming = true, allowRecording = false)
         assertTrue(SourceRightsPolicy.evaluate(source, RightsAction.STREAM).allowed)
         assertFalse(SourceRightsPolicy.evaluate(source, RightsAction.RECORD).allowed)
     }
 
-    @Test
-    fun remote_switch_can_disable_capability_without_app_release() {
-        val source = verifiedSource().copy(streamingEnabled = false)
-        assertFalse(SourceRightsPolicy.evaluate(source, RightsAction.STREAM).allowed)
+    @Test fun remote_switch_can_disable_capability_without_app_release() {
+        assertFalse(SourceRightsPolicy.evaluate(verifiedSource().copy(streamingEnabled = false), RightsAction.STREAM).allowed)
     }
 
-    @Test
-    fun offline_playback_requires_download_and_offline_rights() {
-        val source = verifiedSource(
-            allowDownload = true,
-            allowOfflinePlayback = true,
-        )
+    @Test fun offline_sync_and_cache_are_independent_business_rules() {
+        val source = verifiedSource(allowCaching = true, allowOfflineSync = true, allowOfflinePlayback = true)
+        assertTrue(SourceRightsPolicy.evaluate(source, RightsAction.CACHE).allowed)
+        assertTrue(SourceRightsPolicy.evaluate(source, RightsAction.OFFLINE_SYNC).allowed)
         assertTrue(SourceRightsPolicy.evaluate(source, RightsAction.OFFLINE_PLAYBACK).allowed)
-        assertFalse(
-            SourceRightsPolicy.evaluate(
-                source.copy(allowDownload = false),
-                RightsAction.OFFLINE_PLAYBACK,
-            ).allowed,
-        )
+        assertFalse(SourceRightsPolicy.evaluate(source, RightsAction.DOWNLOAD).allowed)
     }
 }

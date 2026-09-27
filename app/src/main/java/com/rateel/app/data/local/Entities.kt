@@ -22,6 +22,8 @@ data class ContentSourceEntity(
     val allowStreaming: Boolean,
     val allowDownload: Boolean,
     val allowOfflinePlayback: Boolean,
+    val allowCaching: Boolean,
+    val allowOfflineSync: Boolean,
     val allowRecording: Boolean,
     val allowSharing: Boolean,
     val allowCommercialUse: Boolean,
@@ -36,6 +38,8 @@ data class ContentSourceEntity(
     val streamingEnabled: Boolean,
     val downloadEnabled: Boolean,
     val offlinePlaybackEnabled: Boolean,
+    val cachingEnabled: Boolean,
+    val offlineSyncEnabled: Boolean,
     val recordingEnabled: Boolean,
     val sharingEnabled: Boolean,
     val disabledReason: String?,
@@ -43,18 +47,8 @@ data class ContentSourceEntity(
 
 @Entity(
     tableName = "radio_stations",
-    foreignKeys = [
-        ForeignKey(
-            entity = ContentSourceEntity::class,
-            parentColumns = ["id"],
-            childColumns = ["sourceId"],
-            onDelete = ForeignKey.NO_ACTION,
-        ),
-    ],
-    indices = [
-        Index("sourceId"),
-        Index(value = ["sourceId", "canonicalKey"], unique = true),
-    ],
+    foreignKeys = [ForeignKey(entity = ContentSourceEntity::class, parentColumns = ["id"], childColumns = ["sourceId"], onDelete = ForeignKey.NO_ACTION)],
+    indices = [Index("sourceId"), Index(value = ["sourceId", "canonicalKey"], unique = true)],
 )
 data class RadioEntity(
     @PrimaryKey val id: String,
@@ -79,18 +73,8 @@ data class RadioEntity(
 @Entity(
     tableName = "radio_streams",
     foreignKeys = [
-        ForeignKey(
-            entity = RadioEntity::class,
-            parentColumns = ["id"],
-            childColumns = ["radioId"],
-            onDelete = ForeignKey.CASCADE,
-        ),
-        ForeignKey(
-            entity = ContentSourceEntity::class,
-            parentColumns = ["id"],
-            childColumns = ["sourceId"],
-            onDelete = ForeignKey.NO_ACTION,
-        ),
+        ForeignKey(entity = RadioEntity::class, parentColumns = ["id"], childColumns = ["radioId"], onDelete = ForeignKey.CASCADE),
+        ForeignKey(entity = ContentSourceEntity::class, parentColumns = ["id"], childColumns = ["sourceId"], onDelete = ForeignKey.NO_ACTION),
     ],
     indices = [Index("radioId"), Index("sourceId")],
 )
@@ -107,14 +91,7 @@ data class RadioStreamEntity(
 
 @Entity(
     tableName = "reciters",
-    foreignKeys = [
-        ForeignKey(
-            entity = ContentSourceEntity::class,
-            parentColumns = ["id"],
-            childColumns = ["sourceId"],
-            onDelete = ForeignKey.NO_ACTION,
-        ),
-    ],
+    foreignKeys = [ForeignKey(entity = ContentSourceEntity::class, parentColumns = ["id"], childColumns = ["sourceId"], onDelete = ForeignKey.NO_ACTION)],
     indices = [Index("sourceId")],
 )
 data class ReciterEntity(
@@ -131,18 +108,8 @@ data class ReciterEntity(
 @Entity(
     tableName = "mushafs",
     foreignKeys = [
-        ForeignKey(
-            entity = ReciterEntity::class,
-            parentColumns = ["id"],
-            childColumns = ["reciterId"],
-            onDelete = ForeignKey.CASCADE,
-        ),
-        ForeignKey(
-            entity = ContentSourceEntity::class,
-            parentColumns = ["id"],
-            childColumns = ["sourceId"],
-            onDelete = ForeignKey.NO_ACTION,
-        ),
+        ForeignKey(entity = ReciterEntity::class, parentColumns = ["id"], childColumns = ["reciterId"], onDelete = ForeignKey.CASCADE),
+        ForeignKey(entity = ContentSourceEntity::class, parentColumns = ["id"], childColumns = ["sourceId"], onDelete = ForeignKey.NO_ACTION),
     ],
     indices = [Index("reciterId"), Index("sourceId")],
 )
@@ -163,18 +130,8 @@ data class MushafEntity(
 @Entity(
     tableName = "audio_tracks",
     foreignKeys = [
-        ForeignKey(
-            entity = MushafEntity::class,
-            parentColumns = ["id"],
-            childColumns = ["mushafId"],
-            onDelete = ForeignKey.CASCADE,
-        ),
-        ForeignKey(
-            entity = ContentSourceEntity::class,
-            parentColumns = ["id"],
-            childColumns = ["sourceId"],
-            onDelete = ForeignKey.NO_ACTION,
-        ),
+        ForeignKey(entity = MushafEntity::class, parentColumns = ["id"], childColumns = ["mushafId"], onDelete = ForeignKey.CASCADE),
+        ForeignKey(entity = ContentSourceEntity::class, parentColumns = ["id"], childColumns = ["sourceId"], onDelete = ForeignKey.NO_ACTION),
     ],
     indices = [Index("mushafId"), Index("sourceId"), Index("surahNumber")],
 )
@@ -195,36 +152,15 @@ data class AudioTrackEntity(
     val downloadable: Boolean,
 )
 
-@Entity(
-    tableName = "favorites",
-    indices = [Index(value = ["contentType", "contentId"], unique = true)],
-)
-data class FavoriteEntity(
-    @PrimaryKey(autoGenerate = true) val id: Long = 0,
-    val contentType: String,
-    val contentId: String,
-    val createdAt: Long,
-)
+@Entity(tableName = "favorites", indices = [Index(value = ["contentType", "contentId"], unique = true)])
+data class FavoriteEntity(@PrimaryKey(autoGenerate = true) val id: Long = 0, val contentType: String, val contentId: String, val createdAt: Long)
 
 @Entity(tableName = "listening_history", indices = [Index("contentId")])
-data class ListeningHistoryEntity(
-    @PrimaryKey(autoGenerate = true) val id: Long = 0,
-    val contentType: String,
-    val contentId: String,
-    val playedAt: Long,
-    val positionMs: Long = 0,
-)
+data class ListeningHistoryEntity(@PrimaryKey(autoGenerate = true) val id: Long = 0, val contentType: String, val contentId: String, val playedAt: Long, val positionMs: Long = 0)
 
 @Entity(
     tableName = "downloads",
-    foreignKeys = [
-        ForeignKey(
-            entity = ContentSourceEntity::class,
-            parentColumns = ["id"],
-            childColumns = ["sourceId"],
-            onDelete = ForeignKey.NO_ACTION,
-        ),
-    ],
+    foreignKeys = [ForeignKey(entity = ContentSourceEntity::class, parentColumns = ["id"], childColumns = ["sourceId"], onDelete = ForeignKey.NO_ACTION)],
     indices = [Index("sourceId"), Index("mushafId"), Index("surahNumber")],
 )
 data class DownloadEntity(
@@ -247,35 +183,16 @@ data class DownloadEntity(
 )
 
 @Entity(tableName = "playback_progress")
-data class PlaybackProgressEntity(
-    @PrimaryKey val contentId: String,
-    val positionMs: Long,
-    val durationMs: Long?,
-    val updatedAt: Long,
-)
+data class PlaybackProgressEntity(@PrimaryKey val contentId: String, val positionMs: Long, val durationMs: Long?, val updatedAt: Long)
 
 @Entity(tableName = "cache_metadata")
-data class CacheMetadataEntity(
-    @PrimaryKey val key: String,
-    val updatedAt: Long,
-    val expiresAt: Long?,
-)
+data class CacheMetadataEntity(@PrimaryKey val key: String, val updatedAt: Long, val expiresAt: Long?)
 
 @Entity(
     tableName = "recordings",
     foreignKeys = [
-        ForeignKey(
-            entity = RadioEntity::class,
-            parentColumns = ["id"],
-            childColumns = ["stationId"],
-            onDelete = ForeignKey.NO_ACTION,
-        ),
-        ForeignKey(
-            entity = ContentSourceEntity::class,
-            parentColumns = ["id"],
-            childColumns = ["sourceId"],
-            onDelete = ForeignKey.NO_ACTION,
-        ),
+        ForeignKey(entity = RadioEntity::class, parentColumns = ["id"], childColumns = ["stationId"], onDelete = ForeignKey.NO_ACTION),
+        ForeignKey(entity = ContentSourceEntity::class, parentColumns = ["id"], childColumns = ["sourceId"], onDelete = ForeignKey.NO_ACTION),
     ],
     indices = [Index("stationId"), Index("sourceId")],
 )
