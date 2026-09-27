@@ -50,26 +50,8 @@ jobs:
           test -f app/build.gradle.kts
           test -f app/src/main/AndroidManifest.xml
           test -f .github/workflows/android-ci.yml
-
-          python3 - <<'PY'
-          from pathlib import Path
-          path = Path(".github/workflows/android-ci.yml")
-          text = path.read_text()
-          old = '''      - uses: android-actions/setup-android@v3
-      - name: Install Android SDK
-        run: yes | sdkmanager "platforms;android-36" "build-tools;36.0.0"
-'''
-          new = '''      - name: Install Android SDK
-        shell: bash
-        run: |
-          SDKMANAGER="${ANDROID_SDK_ROOT}/cmdline-tools/latest/bin/sdkmanager"
-          yes | "${SDKMANAGER}" --licenses >/dev/null || true
-          "${SDKMANAGER}" "platforms;android-36" "build-tools;36.0.0"
-'''
-          if old not in text:
-              raise SystemExit("Expected Android SDK block not found in final CI workflow")
-          path.write_text(text.replace(old, new))
-          PY
+          sed -i '/android-actions\/setup-android@v3/d' .github/workflows/android-ci.yml
+          sed -i 's#run: yes | sdkmanager "platforms;android-36" "build-tools;36.0.0"#run: yes | "$ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager" "platforms;android-36" "build-tools;36.0.0"#' .github/workflows/android-ci.yml
 
       - name: Generate Gradle wrapper
         shell: bash
