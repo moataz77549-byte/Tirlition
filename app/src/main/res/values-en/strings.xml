@@ -1,0 +1,31 @@
+<resources>
+    <string name="app_name">Rateel</string>
+    <string name="home">Home</string>
+    <string name="radios">Radios</string>
+    <string name="reciters">Reciters</string>
+    <string name="downloads">Downloads</string>
+    <string name="library">Library</string>
+    <string name="settings">Settings</string>
+    <string name="coming_soon">This section will be completed in later stages.</string>
+    <string name="home_headline">Listen with presence</string>
+    <string name="home_empty">No saved content yet. Source data will appear here after providers are connected.</string>
+    <string name="featured_radios">Featured radios</string>
+    <string name="featured_reciters">Featured reciters</string>
+    <string name="offline_cached_content">You are offline. Rateel will continue showing locally cached content.</string>
+    <string name="retry">Retry</string>
+    <string name="theme">Theme</string>
+    <string name="theme_system">System default</string>
+    <string name="theme_light">Light</string>
+    <string name="theme_dark">Dark</string>
+    <string name="sources_and_rights">Sources &amp; rights</string>
+    <string name="sources_and_rights_summary">Review content providers and the usage policies attached to them.</string>
+    <string name="sources_and_rights_empty">No production sources are enabled yet. Rateel will not expose a source before its rights record is registered and verified.</string>
+    <string name="rights_verified">Rights record verified</string>
+    <string name="rights_unverified">Usage rights not approved yet</string>
+    <string name="back">Back</string>
+    <string name="error_network">Network connection failed. Check your connection and retry.</string>
+    <string name="error_server">The server is currently unavailable.</string>
+    <string name="error_timeout">The connection took longer than expected.</string>
+    <string name="error_parsing">The source data could not be read.</string>
+    <string name="error_unknown">An unexpected error occurred. Please retry.</string>
+</resources>
