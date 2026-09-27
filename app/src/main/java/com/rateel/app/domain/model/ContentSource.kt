@@ -43,6 +43,13 @@ data class ContentSource(
     val lastRightsCheckAt: Long? = null,
     val lastTechnicalCheckAt: Long? = null,
     val notes: String? = null,
+    val isEnabled: Boolean = true,
+    val streamingEnabled: Boolean = true,
+    val downloadEnabled: Boolean = true,
+    val offlinePlaybackEnabled: Boolean = true,
+    val recordingEnabled: Boolean = true,
+    val sharingEnabled: Boolean = true,
+    val disabledReason: String? = null,
 )
 
 enum class RightsAction {
@@ -66,16 +73,24 @@ object SourceRightsPolicy {
         source: ContentSource,
         action: RightsAction,
     ): RightsDecision {
+        if (!source.isEnabled) {
+            return denied(source, source.disabledReason ?: "source_disabled")
+        }
         if (!source.isVerified) {
-            return RightsDecision(
-                allowed = false,
-                attributionRequired = source.requiresAttribution,
-                maxOfflineRetentionDays = source.maxOfflineRetentionDays,
-                reason = "source_not_verified",
-            )
+            return denied(source, "source_not_verified")
         }
 
-        val allowed = when (action) {
+        val remotelyEnabled = when (action) {
+            RightsAction.STREAM -> source.streamingEnabled
+            RightsAction.DOWNLOAD -> source.downloadEnabled
+            RightsAction.OFFLINE_PLAYBACK -> source.offlinePlaybackEnabled
+            RightsAction.RECORD -> source.recordingEnabled
+            RightsAction.SHARE -> source.sharingEnabled
+            RightsAction.COMMERCIAL_USE -> true
+        }
+        if (!remotelyEnabled) return denied(source, "action_disabled_remotely")
+
+        val rightsAllowed = when (action) {
             RightsAction.STREAM -> source.allowStreaming
             RightsAction.DOWNLOAD -> source.allowDownload
             RightsAction.OFFLINE_PLAYBACK ->
@@ -85,13 +100,23 @@ object SourceRightsPolicy {
             RightsAction.COMMERCIAL_USE -> source.allowCommercialUse
         }
 
-        return RightsDecision(
-            allowed = allowed,
-            attributionRequired = source.requiresAttribution,
-            maxOfflineRetentionDays = source.maxOfflineRetentionDays,
-            reason = if (allowed) null else "action_not_permitted",
-        )
+        return if (rightsAllowed) {
+            RightsDecision(
+                allowed = true,
+                attributionRequired = source.requiresAttribution,
+                maxOfflineRetentionDays = source.maxOfflineRetentionDays,
+            )
+        } else {
+            denied(source, "action_not_permitted")
+        }
     }
+
+    private fun denied(source: ContentSource, reason: String) = RightsDecision(
+        allowed = false,
+        attributionRequired = source.requiresAttribution,
+        maxOfflineRetentionDays = source.maxOfflineRetentionDays,
+        reason = reason,
+    )
 }
 
 object SourceIds {

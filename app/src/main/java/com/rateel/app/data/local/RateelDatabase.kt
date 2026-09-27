@@ -18,6 +18,18 @@ data class RadioWithStreams(
 )
 
 @Dao
+interface SourceDao {
+    @Query("SELECT * FROM content_sources WHERE isEnabled = 1 ORDER BY name")
+    fun observeEnabled(): Flow<List<ContentSourceEntity>>
+
+    @Query("SELECT * FROM content_sources WHERE id = :id LIMIT 1")
+    suspend fun getById(id: String): ContentSourceEntity?
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun upsertAll(items: List<ContentSourceEntity>)
+}
+
+@Dao
 abstract class RadioDao {
     @Transaction
     @Query("SELECT * FROM radio_stations ORDER BY isFeatured DESC, nameArabic")
@@ -72,6 +84,7 @@ interface AudioTrackDao {
 
 @Database(
     entities = [
+        ContentSourceEntity::class,
         RadioEntity::class,
         RadioStreamEntity::class,
         ReciterEntity::class,
@@ -82,12 +95,13 @@ interface AudioTrackDao {
         DownloadEntity::class,
         PlaybackProgressEntity::class,
         CacheMetadataEntity::class,
-        RecordingEntity::class,
+        LocalRecordingEntity::class,
     ],
     version = 1,
     exportSchema = true,
 )
 abstract class RateelDatabase : RoomDatabase() {
+    abstract fun sourceDao(): SourceDao
     abstract fun radioDao(): RadioDao
     abstract fun reciterDao(): ReciterDao
     abstract fun mushafDao(): MushafDao
