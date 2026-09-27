@@ -17,6 +17,12 @@
     <string name="theme_system">حسب النظام</string>
     <string name="theme_light">فاتح</string>
     <string name="theme_dark">داكن</string>
+    <string name="sources_and_rights">المصادر والحقوق</string>
+    <string name="sources_and_rights_summary">اعرض الجهات التي يأتي منها المحتوى وسياسات الاستخدام المرتبطة بها.</string>
+    <string name="sources_and_rights_empty">لا توجد مصادر إنتاج مفعلة بعد. لن يعرض رتيل مصدرًا قبل تسجيل حقوقه والتحقق منها.</string>
+    <string name="rights_verified">تم التحقق من سجل الحقوق</string>
+    <string name="rights_unverified">حقوق الاستخدام لم تُعتمد بعد</string>
+    <string name="back">رجوع</string>
     <string name="error_network">تعذر الاتصال بالشبكة. تحقق من الإنترنت وحاول مجددًا.</string>
     <string name="error_server">تعذر الوصول إلى الخادم حاليًا.</string>
     <string name="error_timeout">استغرق الاتصال وقتًا أطول من المتوقع.</string>

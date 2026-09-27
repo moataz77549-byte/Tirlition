@@ -42,10 +42,11 @@ fun RateelApp() {
     val navController = rememberNavController()
     val backStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = backStackEntry?.destination?.route
+    val secondaryRoutes = setOf("settings", "sources-rights")
 
     Scaffold(
         bottomBar = {
-            if (currentRoute != "settings") {
+            if (currentRoute !in secondaryRoutes) {
                 NavigationBar {
                     Destination.entries.forEach { destination ->
                         NavigationBarItem(
@@ -84,7 +85,12 @@ fun RateelApp() {
             composable(Destination.RECITERS.route) { Placeholder(R.string.reciters) }
             composable(Destination.DOWNLOADS.route) { Placeholder(R.string.downloads) }
             composable(Destination.LIBRARY.route) { Placeholder(R.string.library) }
-            composable("settings") { SettingsRoute() }
+            composable("settings") {
+                SettingsRoute(onSources = { navController.navigate("sources-rights") })
+            }
+            composable("sources-rights") {
+                SourcesAndRightsRoute(onBack = { navController.popBackStack() })
+            }
         }
     }
 }

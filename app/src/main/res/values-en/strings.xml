@@ -17,6 +17,12 @@
     <string name="theme_system">System default</string>
     <string name="theme_light">Light</string>
     <string name="theme_dark">Dark</string>
+    <string name="sources_and_rights">Sources &amp; rights</string>
+    <string name="sources_and_rights_summary">Review content providers and the usage policies attached to them.</string>
+    <string name="sources_and_rights_empty">No production sources are enabled yet. Rateel will not expose a source before its rights record is registered and verified.</string>
+    <string name="rights_verified">Rights record verified</string>
+    <string name="rights_unverified">Usage rights not approved yet</string>
+    <string name="back">Back</string>
     <string name="error_network">Network connection failed. Check your connection and retry.</string>
     <string name="error_server">The server is currently unavailable.</string>
     <string name="error_timeout">The connection took longer than expected.</string>

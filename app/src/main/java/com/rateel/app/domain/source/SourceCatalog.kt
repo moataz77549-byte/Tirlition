@@ -6,8 +6,8 @@ import com.rateel.app.domain.model.SourceIds
 import com.rateel.app.domain.model.SourceType
 
 /**
- * Planned providers are intentionally non-production until their rights record is verified.
- * All permissions default to false, preventing accidental exposure of download/record/share actions.
+ * Planned providers are intentionally disabled until their rights record and
+ * production access are both verified. Unknown permissions always stay false.
  */
 object PlannedSourceCatalog {
     val mp3QuranV3 = ContentSource(
@@ -21,7 +21,31 @@ object PlannedSourceCatalog {
         licenseType = LicenseType.UNKNOWN,
         isOfficial = true,
         isVerified = false,
-        notes = "Technical API availability verified; production rights must be verified before enabling content.",
+        isEnabled = false,
+        disabledReason = "rights_review_required",
+        streamingEnabled = false,
+        downloadEnabled = false,
+        offlinePlaybackEnabled = false,
+        recordingEnabled = false,
+        sharingEnabled = false,
+        notes = "Official API endpoints are technically documented. Content-use rights must be verified before production enablement.",
+    )
+
+    val qurangoStreams = ContentSource(
+        id = SourceIds.QURANGO_STREAMS,
+        name = "Qurango Streams",
+        provider = "Qurango.net",
+        type = SourceType.CONTENT_PROVIDER,
+        licenseType = LicenseType.UNKNOWN,
+        isVerified = false,
+        isEnabled = false,
+        disabledReason = "rights_review_required",
+        streamingEnabled = false,
+        downloadEnabled = false,
+        offlinePlaybackEnabled = false,
+        recordingEnabled = false,
+        sharingEnabled = false,
+        notes = "MP3Quran v3 radio responses currently reference Qurango stream URLs. Direct rights remain unverified.",
     )
 
     val quranFoundation = ContentSource(
@@ -36,12 +60,23 @@ object PlannedSourceCatalog {
         attributionText = "Quran data provided by Quran Foundation.",
         licenseType = LicenseType.PROVIDER_TERMS,
         requiresAttribution = true,
+        allowStreaming = true,
+        allowCommercialUse = true,
         maxOfflineRetentionDays = 7,
         requiresPeriodicSync = true,
         isOfficial = true,
-        isVerified = false,
-        notes = "Enable individual capabilities only after application approval and content-specific license review.",
+        isVerified = true,
+        lastRightsCheckAt = 1_790_553_600_000L,
+        lastTechnicalCheckAt = 1_790_553_600_000L,
+        isEnabled = false,
+        disabledReason = "production_access_required",
+        streamingEnabled = false,
+        downloadEnabled = false,
+        offlinePlaybackEnabled = false,
+        recordingEnabled = false,
+        sharingEnabled = false,
+        notes = "Developer terms reviewed 2026-09-28. Mobile client secrets are forbidden; content-specific licensing and production approval still apply.",
     )
 
-    val all: List<ContentSource> = listOf(mp3QuranV3, quranFoundation)
+    val all: List<ContentSource> = listOf(mp3QuranV3, qurangoStreams, quranFoundation)
 }
