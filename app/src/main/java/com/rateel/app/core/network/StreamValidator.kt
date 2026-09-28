@@ -34,10 +34,27 @@ class OkHttpStreamValidator @Inject constructor(
                 return@withContext StreamValidationResult(StreamHealth.BLOCKED, url, reason = "host_not_allowed")
             }
 
-            val response = runCatching {
+            val headResponse = runCatching {
                 client.newCall(Request.Builder().url(url).head().build()).execute()
             }.getOrElse {
                 return@withContext StreamValidationResult(StreamHealth.OFFLINE, url, reason = it.javaClass.simpleName)
+            }
+
+            val response = if (headResponse.code == 405 || headResponse.code == 403) {
+                headResponse.close()
+                runCatching {
+                    client.newCall(
+                        Request.Builder()
+                            .url(url)
+                            .header("Range", "bytes=0-1")
+                            .get()
+                            .build(),
+                    ).execute()
+                }.getOrElse {
+                    return@withContext StreamValidationResult(StreamHealth.OFFLINE, url, reason = it.javaClass.simpleName)
+                }
+            } else {
+                headResponse
             }
 
             response.use {

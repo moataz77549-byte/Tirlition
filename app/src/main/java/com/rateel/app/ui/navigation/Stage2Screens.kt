@@ -87,11 +87,11 @@ fun RecitersRoute(
             }
             if (state.loading) LinearProgressIndicator(Modifier.fillMaxWidth())
             LazyColumn(contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp)) {
-                items(state.items, key = { it.id }) { reciter ->
+                items(state.items, key = { it.reciter.id }) { item ->
                     ListItem(
-                        headlineContent = { Text(reciter.nameArabic) },
-                        supportingContent = { Text(stringResource(R.string.mp3quran_source)) },
-                        modifier = Modifier.clickable { onReciter(reciter.id) },
+                        headlineContent = { Text(item.reciter.nameArabic) },
+                        supportingContent = { Text(item.sourceLabel) },
+                        modifier = Modifier.clickable { onReciter(item.reciter.id) },
                     )
                     HorizontalDivider()
                 }

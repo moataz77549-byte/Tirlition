@@ -14,9 +14,14 @@ import javax.inject.Inject
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 
+data class ReciterItemUiModel(
+    val reciter: Reciter,
+    val sourceLabel: String,
+)
+
 data class RecitersUiState(
     val query: String = "",
-    val items: List<Reciter> = emptyList(),
+    val items: List<ReciterItemUiModel> = emptyList(),
     val loading: Boolean = false,
     val offline: Boolean = false,
     @StringRes val messageRes: Int? = null,
@@ -25,17 +30,24 @@ data class RecitersUiState(
 @HiltViewModel
 class RecitersViewModel @Inject constructor(
     private val repository: ReciterRepository,
+    sources: SourceRepository,
     network: NetworkStatusProvider,
 ) : ViewModel() {
     private val query = MutableStateFlow("")
     private val loading = MutableStateFlow(false)
     private val messageRes = MutableStateFlow<Int?>(null)
 
-    val uiState = combine(repository.observeReciters(), query, network.isOnline, loading, messageRes) { reciters, search, online, busy, message ->
-        val q = search.trim()
+    private val content = combine(repository.observeReciters(), sources.observeSources(), query) { reciters, sourceItems, search ->
+        Triple(reciters, sourceItems.associateBy { it.id }, search.trim())
+    }
+
+    val uiState = combine(content, network.isOnline, loading, messageRes) { contentState, online, busy, message ->
+        val (reciters, sourceMap, q) = contentState
         RecitersUiState(
             query = q,
-            items = reciters.filter { q.isBlank() || it.nameArabic.contains(q, true) || it.nameEnglish.orEmpty().contains(q, true) },
+            items = reciters
+                .filter { q.isBlank() || it.nameArabic.contains(q, true) || it.nameEnglish.orEmpty().contains(q, true) }
+                .map { ReciterItemUiModel(it, sourceMap[it.sourceId]?.name ?: it.sourceId) },
             loading = busy,
             offline = !online,
             messageRes = message,

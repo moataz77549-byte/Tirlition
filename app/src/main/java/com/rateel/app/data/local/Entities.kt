@@ -1,5 +1,6 @@
 package com.rateel.app.data.local
 
+import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.Index
@@ -61,13 +62,13 @@ data class RadioEntity(
     val country: String?,
     val language: String,
     val category: String?,
-    val categoryOrigin: String,
+    @ColumnInfo(defaultValue = "'UNKNOWN'") val categoryOrigin: String,
     val website: String?,
     val isActive: Boolean,
     val isFeatured: Boolean,
     val isVerified: Boolean,
     val health: String,
-    val sourceHealth: String,
+    @ColumnInfo(defaultValue = "'UNKNOWN'") val sourceHealth: String,
     val createdAt: Long?,
     val updatedAt: Long?,
 )
@@ -87,7 +88,7 @@ data class RadioStreamEntity(
     val providerEndpointId: String?,
     val returnedBySourceId: String?,
     val url: String,
-    val originalUrl: String,
+    @ColumnInfo(defaultValue = "''") val originalUrl: String,
     val resolvedUrl: String?,
     val assetHost: String?,
     val resolvedHost: String?,
@@ -95,8 +96,8 @@ data class RadioStreamEntity(
     val format: String?,
     val bitrateKbps: Int?,
     val isPrimary: Boolean,
-    val health: String,
-    val assetRightsStatus: String,
+    @ColumnInfo(defaultValue = "'UNKNOWN'") val health: String,
+    @ColumnInfo(defaultValue = "'INHERIT_SOURCE'") val assetRightsStatus: String,
 )
 
 @Entity(
@@ -160,7 +161,7 @@ data class AudioTrackEntity(
     val quality: String?,
     val checksum: String?,
     val downloadable: Boolean,
-    val assetRightsStatus: String,
+    @ColumnInfo(defaultValue = "'INHERIT_SOURCE'") val assetRightsStatus: String,
 )
 
 @Entity(tableName = "quran_languages")
