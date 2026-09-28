@@ -36,6 +36,7 @@ class FakeRadioRepository(
     private val state = MutableStateFlow(items)
     override fun observeRadios(): Flow<List<RadioStation>> = state
     override suspend fun refresh(): AppResult<Unit> = AppResult.Success(Unit)
+    override suspend fun refreshIfStale(): AppResult<Unit> = AppResult.Success(Unit)
 }
 
 class FakeReciterRepository(
@@ -51,6 +52,7 @@ class FakeReciterRepository(
     private val state = MutableStateFlow(items)
     override fun observeReciters(): Flow<List<Reciter>> = state
     override suspend fun refresh(): AppResult<Unit> = AppResult.Success(Unit)
+    override suspend fun refreshIfStale(): AppResult<Unit> = AppResult.Success(Unit)
 }
 
 class FakeMushafRepository(
