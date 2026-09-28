@@ -37,6 +37,7 @@ class OfflineRadioRepositoryTest {
             object : RadioRemoteDataSource {
                 override suspend fun fetchRadios(): AppResult<List<RadioStation>> = AppResult.Success(listOf(remoteItem))
             },
+            FakeSourceRepository(),
         )
         assertTrue(repository.refresh() is AppResult.Success)
         val mapped = repository.observeRadios().first().single()
@@ -44,6 +45,12 @@ class OfflineRadioRepositoryTest {
         assertEquals(SourceIds.QURANGO_STREAMS, mapped.streams.single().sourceId)
         assertEquals(SourceIds.MP3_QURAN_V3, mapped.streams.single().returnedBySourceId)
         assertEquals(AssetRightsStatus.STREAM_ONLY, mapped.streams.single().assetRightsStatus)
+    }
+
+    private class FakeSourceRepository : com.rateel.app.domain.repository.SourceRepository {
+        override fun observeSources(): Flow<List<ContentSource>> = MutableStateFlow(emptyList())
+        override suspend fun getSource(id: String): ContentSource? = null
+        override suspend fun ensureBuiltInCatalog() = Unit
     }
 
     private class FakeSyncDao : SourceSyncDao {

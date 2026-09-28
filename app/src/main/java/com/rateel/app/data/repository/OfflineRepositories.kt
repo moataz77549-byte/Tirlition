@@ -41,10 +41,12 @@ class OfflineRadioRepository @Inject constructor(
     private val dao: RadioDao,
     private val syncDao: SourceSyncDao,
     private val remote: RadioRemoteDataSource,
+    private val sources: SourceRepository,
 ) : RadioRepository {
     override fun observeRadios(): Flow<List<RadioStation>> = dao.observeAll().map { rows -> rows.map { it.toDomain() } }
 
     override suspend fun refresh(): AppResult<Unit> {
+        sources.ensureBuiltInCatalog()
         val now = System.currentTimeMillis()
         return when (val result = remote.fetchRadios()) {
             is AppResult.Success -> {
@@ -94,6 +96,7 @@ class OfflineReciterRepository @Inject constructor(
     private val catalogDao: CatalogDao,
     private val syncDao: SourceSyncDao,
     private val remote: CatalogRemoteDataSource,
+    private val sources: SourceRepository,
 ) : ReciterRepository {
     override fun observeReciters(): Flow<List<Reciter>> =
         reciterDao.observeAll().map { rows ->
@@ -101,6 +104,7 @@ class OfflineReciterRepository @Inject constructor(
         }
 
     override suspend fun refresh(): AppResult<Unit> {
+        sources.ensureBuiltInCatalog()
         val now = System.currentTimeMillis()
         return when (val result = remote.fetchCatalog("ar")) {
             is AppResult.Success -> {
