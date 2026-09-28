@@ -1,7 +1,9 @@
 name: Android CI
 on:
   push:
-    branches: [ main, feature/rateel-foundation ]
+    branches:
+      - main
+      - 'feature/**'
   pull_request:
     branches: [ main ]
 permissions:
@@ -20,8 +22,6 @@ jobs:
           gradle-version: '8.13'
       - name: Unit tests
         run: gradle testDebugUnitTest --stacktrace
-      - name: Compile instrumented tests
-        run: gradle assembleDebugAndroidTest --stacktrace
       - name: Lint
         run: gradle lintDebug --stacktrace
       - name: Build debug

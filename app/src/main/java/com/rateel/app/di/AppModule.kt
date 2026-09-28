@@ -6,29 +6,21 @@ import com.jakewharton.retrofit2.converter.kotlinx.serialization.asConverterFact
 import com.rateel.app.BuildConfig
 import com.rateel.app.core.network.NetworkMonitor
 import com.rateel.app.core.network.NetworkStatusProvider
-import com.rateel.app.data.local.AudioTrackDao
-import com.rateel.app.data.local.MushafDao
-import com.rateel.app.data.local.RadioDao
-import com.rateel.app.data.local.RateelDatabase
-import com.rateel.app.data.local.RateelMigrations
-import com.rateel.app.data.local.ReciterDao
-import com.rateel.app.data.local.SourceDao
-import com.rateel.app.data.remote.EmptyQuranAudioRemoteDataSource
-import com.rateel.app.data.remote.EmptyRadioRemoteDataSource
-import com.rateel.app.data.remote.EmptyReciterRemoteDataSource
+import com.rateel.app.core.network.OkHttpStreamValidator
+import com.rateel.app.core.network.StreamValidator
+import com.rateel.app.data.local.*
+import com.rateel.app.data.remote.CatalogRemoteDataSource
 import com.rateel.app.data.remote.QuranAudioRemoteDataSource
 import com.rateel.app.data.remote.RadioRemoteDataSource
 import com.rateel.app.data.remote.ReciterRemoteDataSource
+import com.rateel.app.data.remote.mp3quran.Mp3QuranApi
+import com.rateel.app.data.remote.mp3quran.Mp3QuranRemoteDataSource
 import com.rateel.app.data.repository.LocalAudioRepository
 import com.rateel.app.data.repository.LocalMushafRepository
 import com.rateel.app.data.repository.LocalSourceRepository
 import com.rateel.app.data.repository.OfflineRadioRepository
 import com.rateel.app.data.repository.OfflineReciterRepository
-import com.rateel.app.domain.repository.AudioRepository
-import com.rateel.app.domain.repository.MushafRepository
-import com.rateel.app.domain.repository.RadioRepository
-import com.rateel.app.domain.repository.ReciterRepository
-import com.rateel.app.domain.repository.SourceRepository
+import com.rateel.app.domain.repository.*
 import dagger.Binds
 import dagger.Module
 import dagger.Provides
@@ -60,6 +52,16 @@ object AppModule {
     @Provides fun reciterDao(db: RateelDatabase): ReciterDao = db.reciterDao()
     @Provides fun mushafDao(db: RateelDatabase): MushafDao = db.mushafDao()
     @Provides fun audioTrackDao(db: RateelDatabase): AudioTrackDao = db.audioTrackDao()
+    @Provides fun catalogDao(db: RateelDatabase): CatalogDao = db.catalogDao()
+    @Provides fun sourceSyncDao(db: RateelDatabase): SourceSyncDao = db.sourceSyncDao()
+
+    @Provides
+    @Singleton
+    fun json(): Json = Json {
+        ignoreUnknownKeys = true
+        isLenient = true
+        explicitNulls = false
+    }
 
     @Provides
     @Singleton
@@ -76,37 +78,37 @@ object AppModule {
                         .build(),
                 )
             }
-
         if (BuildConfig.DEBUG) {
-            builder.addInterceptor(
-                HttpLoggingInterceptor().apply {
-                    level = HttpLoggingInterceptor.Level.BASIC
-                },
-            )
+            builder.addInterceptor(HttpLoggingInterceptor().apply { level = HttpLoggingInterceptor.Level.BASIC })
         }
         return builder.build()
     }
 
     @Provides
     @Singleton
-    fun retrofit(client: OkHttpClient): Retrofit =
+    @Mp3QuranRetrofit
+    fun mp3QuranRetrofit(client: OkHttpClient, json: Json): Retrofit =
         Retrofit.Builder()
-            .baseUrl(BuildConfig.API_BASE_URL)
+            .baseUrl("https://www.mp3quran.net/api/v3/")
             .client(client)
-            .addConverterFactory(
-                Json { ignoreUnknownKeys = true }
-                    .asConverterFactory("application/json".toMediaType()),
-            )
+            .addConverterFactory(json.asConverterFactory("application/json".toMediaType()))
             .build()
+
+    @Provides
+    @Singleton
+    fun mp3QuranApi(@Mp3QuranRetrofit retrofit: Retrofit): Mp3QuranApi =
+        retrofit.create(Mp3QuranApi::class.java)
 }
 
 @Module
 @InstallIn(SingletonComponent::class)
 abstract class BindingsModule {
     @Binds abstract fun bindNetworkStatus(impl: NetworkMonitor): NetworkStatusProvider
-    @Binds abstract fun bindRadioRemote(impl: EmptyRadioRemoteDataSource): RadioRemoteDataSource
-    @Binds abstract fun bindReciterRemote(impl: EmptyReciterRemoteDataSource): ReciterRemoteDataSource
-    @Binds abstract fun bindQuranAudioRemote(impl: EmptyQuranAudioRemoteDataSource): QuranAudioRemoteDataSource
+    @Binds abstract fun bindStreamValidator(impl: OkHttpStreamValidator): StreamValidator
+    @Binds abstract fun bindCatalogRemote(impl: Mp3QuranRemoteDataSource): CatalogRemoteDataSource
+    @Binds abstract fun bindRadioRemote(impl: Mp3QuranRemoteDataSource): RadioRemoteDataSource
+    @Binds abstract fun bindReciterRemote(impl: Mp3QuranRemoteDataSource): ReciterRemoteDataSource
+    @Binds abstract fun bindQuranAudioRemote(impl: Mp3QuranRemoteDataSource): QuranAudioRemoteDataSource
     @Binds abstract fun bindSourceRepository(impl: LocalSourceRepository): SourceRepository
     @Binds abstract fun bindRadioRepository(impl: OfflineRadioRepository): RadioRepository
     @Binds abstract fun bindReciterRepository(impl: OfflineReciterRepository): ReciterRepository

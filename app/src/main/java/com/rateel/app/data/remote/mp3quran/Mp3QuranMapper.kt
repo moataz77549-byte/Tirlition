@@ -1,12 +1,6 @@
 package com.rateel.app.data.remote.mp3quran
 
-import com.rateel.app.domain.model.AssetRightsStatus
-import com.rateel.app.domain.model.Mushaf
-import com.rateel.app.domain.model.RadioStation
-import com.rateel.app.domain.model.Reciter
-import com.rateel.app.domain.model.SourceIds
-import com.rateel.app.domain.model.StreamEndpoint
-import com.rateel.app.domain.model.SurahAudio
+import com.rateel.app.domain.model.*
 import com.rateel.app.domain.source.StreamSourceResolver
 import java.net.URI
 
@@ -18,20 +12,10 @@ data class Mp3QuranCatalog(
 
 object Mp3QuranMapper {
     fun parseSurahList(value: String): List<Int> =
-        value.split(',')
-            .asSequence()
-            .map(String::trim)
-            .filter(String::isNotEmpty)
-            .mapNotNull(String::toIntOrNull)
-            .filter { it in 1..114 }
-            .distinct()
-            .sorted()
-            .toList()
+        value.split(',').asSequence().map(String::trim).filter(String::isNotEmpty)
+            .mapNotNull(String::toIntOrNull).filter { it in 1..114 }.distinct().sorted().toList()
 
-    fun mapCatalog(
-        response: Mp3QuranRecitersResponse,
-        suwar: Mp3QuranSuwarResponse,
-    ): Mp3QuranCatalog {
+    fun mapCatalog(response: Mp3QuranRecitersResponse, suwar: Mp3QuranSuwarResponse): Mp3QuranCatalog {
         val names = suwar.suwar.associate { it.id to it.name.trim() }
         val reciters = response.reciters.map { dto ->
             Reciter(
@@ -47,7 +31,6 @@ object Mp3QuranMapper {
         }
         val mushafs = response.reciters.flatMap { reciter ->
             reciter.moshaf.map { dto ->
-                val available = parseSurahList(dto.surahList).toSet()
                 Mushaf(
                     id = "mp3quran:mushaf:${dto.id}",
                     sourceId = SourceIds.MP3_QURAN_V3,
@@ -57,7 +40,7 @@ object Mp3QuranMapper {
                     source = dto.server,
                     format = "mp3",
                     totalSurahs = dto.surahTotal,
-                    availableSurahs = available,
+                    availableSurahs = parseSurahList(dto.surahList).toSet(),
                 )
             }
         }
@@ -73,10 +56,8 @@ object Mp3QuranMapper {
                         audioUrl = Mp3QuranAudioUrlResolver.resolve(mushaf.server, number),
                         format = "mp3",
                         downloadable = true,
-                        metadata = mapOf(
-                            "remoteMushafId" to mushaf.id.toString(),
-                            "remoteReciterId" to reciter.id.toString(),
-                        ),
+                        assetRightsStatus = AssetRightsStatus.VERIFIED_ALLOWED,
+                        metadata = mapOf("remoteMushafId" to mushaf.id.toString(), "remoteReciterId" to reciter.id.toString()),
                     )
                 }
             }
@@ -102,14 +83,11 @@ object Mp3QuranMapper {
                         format = inferFormat(dto.url),
                         primary = true,
                         providerEndpointId = dto.id.toString(),
-                        assetRightsStatus = if (endpointSource == SourceIds.QURANGO_STREAMS) {
-                            AssetRightsStatus.STREAM_ONLY
-                        } else {
-                            AssetRightsStatus.PENDING_VERIFICATION
-                        },
+                        assetRightsStatus = if (endpointSource == SourceIds.QURANGO_STREAMS) AssetRightsStatus.STREAM_ONLY else AssetRightsStatus.PENDING_VERIFICATION,
                     ),
                 ),
                 category = "إذاعة قرآنية",
+                categoryOrigin = CategoryOrigin.DERIVED,
             )
         }
 
@@ -134,6 +112,7 @@ object Mp3QuranMapper {
                     ),
                 ),
                 category = "قناة مباشرة",
+                categoryOrigin = CategoryOrigin.DERIVED,
                 tags = listOf("live-tv", "audio-from-live-channel"),
             )
         }
@@ -144,6 +123,5 @@ object Mp3QuranMapper {
         else -> "mp3"
     }
 
-    private fun hostOf(url: String): String? =
-        runCatching { URI(url).host?.lowercase() }.getOrNull()
+    private fun hostOf(url: String): String? = runCatching { URI(url).host?.lowercase() }.getOrNull()
 }
