@@ -93,7 +93,7 @@ The first release remains modular by package rather than Gradle multi-module. Bo
 - Kotlin + Jetpack Compose + Material 3.
 - Hilt, Room, DataStore, Retrofit/OkHttp, Kotlin Serialization, Coroutines/Flow, Coil.
 
-Room schema is version 2 and uses an explicit 1→2 migration. Destructive production migration is forbidden.
+Room schema is version 3 and uses explicit 1→2 and 2→3 migrations. Destructive production migration is forbidden.
 
 With Gradle 8.13 and JDK 17:
 
