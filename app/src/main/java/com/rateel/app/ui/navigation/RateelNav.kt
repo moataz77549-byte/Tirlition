@@ -54,7 +54,9 @@ fun RateelApp() {
     ) { padding ->
         NavHost(navController, Destination.HOME.route, Modifier.padding(padding)) {
             composable(Destination.HOME.route) { HomeRoute(onSettings = { navController.navigate("settings") }) }
-            composable(Destination.RADIO.route) { RadioRoute() }
+            composable(Destination.RADIO.route) {
+                RadioRoute(onPlayer = { navController.navigate("player/radio/$it") })
+            }
             composable(Destination.RECITERS.route) {
                 RecitersRoute(onReciter = { navController.navigate("reciter/$it") })
             }
@@ -68,7 +70,12 @@ fun RateelApp() {
                     onMushaf = { navController.navigate("mushaf/$it") },
                 )
             }
-            composable("mushaf/{mushafId}") { MushafRoute(onBack = { navController.popBackStack() }) }
+            composable("mushaf/{mushafId}") {
+                MushafRoute(
+                    onBack = { navController.popBackStack() },
+                    onPlayer = { navController.navigate("player/surah/$it") },
+                )
+            }
             composable("player/{type}/{itemId}") { Placeholder(R.string.player) }
         }
     }

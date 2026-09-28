@@ -144,3 +144,9 @@ object PlannedSourceCatalog {
     val quranFoundation get() = SourceRegistry.quranFoundation
     val all get() = SourceRegistry.all
 }
+
+
+val ContentSource.baseHost: String?
+    get() = runCatching {
+        java.net.URI(apiBaseUrl ?: website ?: return null).host?.lowercase()
+    }.getOrNull()

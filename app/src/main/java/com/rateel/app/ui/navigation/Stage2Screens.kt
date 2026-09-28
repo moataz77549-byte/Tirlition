@@ -21,7 +21,10 @@ import com.rateel.app.feature.reciters.*
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun RadioRoute(viewModel: RadioViewModel = hiltViewModel()) {
+fun RadioRoute(
+    onPlayer: (String) -> Unit,
+    viewModel: RadioViewModel = hiltViewModel(),
+) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     Scaffold(topBar = { TopAppBar(title = { Text(stringResource(R.string.radios)) }) }) { padding ->
         Column(Modifier.fillMaxSize().padding(padding)) {
@@ -48,11 +51,18 @@ fun RadioRoute(viewModel: RadioViewModel = hiltViewModel()) {
                             Column {
                                 Text(listOfNotNull(item.category, item.sourceLabel).joinToString(" • "))
                                 item.streamUrl?.let { Text(it.substringBefore("?"), maxLines = 1, style = MaterialTheme.typography.bodySmall) }
+                                if (item.health != com.rateel.app.domain.model.StreamHealth.UNKNOWN) {
+                                    Text(stringResource(R.string.stream_status, item.health.name), style = MaterialTheme.typography.labelSmall)
+                                }
+                                if (item.sourceHealth != com.rateel.app.domain.model.SourceHealth.UNKNOWN) {
+                                    Text(stringResource(R.string.source_status, item.sourceHealth.name), style = MaterialTheme.typography.labelSmall)
+                                }
                                 item.attribution?.let { Text(it, style = MaterialTheme.typography.labelSmall) }
                             }
                         },
                         leadingContent = { Icon(Icons.Outlined.Radio, contentDescription = null) },
                         trailingContent = { Text(stringResource(R.string.live_badge), style = MaterialTheme.typography.labelMedium) },
+                        modifier = Modifier.clickable(enabled = item.capabilities.canStream) { onPlayer(item.id) },
                     )
                     HorizontalDivider()
                 }
@@ -140,6 +150,7 @@ fun ReciterDetailRoute(
 @Composable
 fun MushafRoute(
     onBack: () -> Unit,
+    onPlayer: (String) -> Unit,
     viewModel: MushafViewModel = hiltViewModel(),
 ) {
     val tracks by viewModel.tracks.collectAsStateWithLifecycle()
@@ -161,6 +172,7 @@ fun MushafRoute(
                             style = MaterialTheme.typography.bodySmall,
                         )
                     },
+                    modifier = Modifier.clickable(enabled = item.capabilities.canStream) { onPlayer(item.track.id) },
                 )
                 HorizontalDivider()
             }
