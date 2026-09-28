@@ -61,11 +61,13 @@ data class RadioEntity(
     val country: String?,
     val language: String,
     val category: String?,
+    val categoryOrigin: String,
     val website: String?,
     val isActive: Boolean,
     val isFeatured: Boolean,
     val isVerified: Boolean,
     val health: String,
+    val sourceHealth: String,
     val createdAt: Long?,
     val updatedAt: Long?,
 )
@@ -83,10 +85,18 @@ data class RadioStreamEntity(
     val radioId: String,
     val sourceId: String,
     val providerEndpointId: String?,
+    val returnedBySourceId: String?,
     val url: String,
+    val originalUrl: String,
+    val resolvedUrl: String?,
+    val assetHost: String?,
+    val resolvedHost: String?,
+    val lastResolvedAt: Long?,
     val format: String?,
     val bitrateKbps: Int?,
     val isPrimary: Boolean,
+    val health: String,
+    val assetRightsStatus: String,
 )
 
 @Entity(
@@ -150,6 +160,25 @@ data class AudioTrackEntity(
     val quality: String?,
     val checksum: String?,
     val downloadable: Boolean,
+    val assetRightsStatus: String,
+)
+
+@Entity(tableName = "quran_languages")
+data class QuranLanguageEntity(@PrimaryKey val id: String, val code: String, val name: String, val nativeName: String)
+
+@Entity(tableName = "quran_surahs")
+data class QuranSurahEntity(@PrimaryKey val number: Int, val name: String, val startPage: Int?, val endPage: Int?, val isMakki: Boolean?)
+
+@Entity(tableName = "riwayat")
+data class RiwayaEntity(@PrimaryKey val id: Int, val name: String)
+
+@Entity(tableName = "source_sync")
+data class SourceSyncEntity(
+    @PrimaryKey val syncKey: String,
+    val sourceId: String,
+    val lastAttemptAt: Long,
+    val lastSuccessfulSyncAt: Long?,
+    val expiresAt: Long?,
 )
 
 @Entity(tableName = "favorites", indices = [Index(value = ["contentType", "contentId"], unique = true)])
