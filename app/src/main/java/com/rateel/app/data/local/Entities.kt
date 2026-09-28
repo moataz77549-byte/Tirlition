@@ -1,6 +1,7 @@
 package com.rateel.app.data.local
 
 import androidx.room.Entity
+import androidx.room.ColumnInfo
 import androidx.room.ForeignKey
 import androidx.room.Index
 import androidx.room.PrimaryKey
@@ -125,6 +126,7 @@ data class MushafEntity(
     val format: String?,
     val totalSurahs: Int,
     val artworkUrl: String?,
+    @ColumnInfo(defaultValue = "''") val availableSurahs: String = "",
 )
 
 @Entity(
@@ -150,6 +152,15 @@ data class AudioTrackEntity(
     val quality: String?,
     val checksum: String?,
     val downloadable: Boolean,
+)
+
+@Entity(tableName = "surah_metadata")
+data class SurahMetadataEntity(
+    @PrimaryKey val number: Int,
+    val name: String,
+    val startPage: Int?,
+    val endPage: Int?,
+    val isMakki: Boolean?,
 )
 
 @Entity(tableName = "favorites", indices = [Index(value = ["contentType", "contentId"], unique = true)])

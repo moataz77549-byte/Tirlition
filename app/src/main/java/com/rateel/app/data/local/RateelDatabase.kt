@@ -43,12 +43,8 @@ abstract class RadioDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     protected abstract suspend fun insertStreams(items: List<RadioStreamEntity>)
 
-    @Query("DELETE FROM radio_stations")
-    protected abstract suspend fun deleteStations()
-
     @Transaction
     open suspend fun replaceAll(stations: List<RadioEntity>, streams: List<RadioStreamEntity>) {
-        deleteStations()
         insertStations(stations)
         if (streams.isNotEmpty()) insertStreams(streams)
     }
@@ -78,6 +74,12 @@ interface AudioTrackDao {
     suspend fun upsertAll(items: List<AudioTrackEntity>)
 }
 
+@Dao
+interface SurahMetadataDao {
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun upsertAll(items: List<SurahMetadataEntity>)
+}
+
 @Database(
     entities = [
         ContentSourceEntity::class,
@@ -86,6 +88,7 @@ interface AudioTrackDao {
         ReciterEntity::class,
         MushafEntity::class,
         AudioTrackEntity::class,
+        SurahMetadataEntity::class,
         FavoriteEntity::class,
         ListeningHistoryEntity::class,
         DownloadEntity::class,
@@ -93,7 +96,7 @@ interface AudioTrackDao {
         CacheMetadataEntity::class,
         LocalRecordingEntity::class,
     ],
-    version = 1,
+    version = 2,
     exportSchema = true,
 )
 abstract class RateelDatabase : RoomDatabase() {
@@ -102,4 +105,5 @@ abstract class RateelDatabase : RoomDatabase() {
     abstract fun reciterDao(): ReciterDao
     abstract fun mushafDao(): MushafDao
     abstract fun audioTrackDao(): AudioTrackDao
+    abstract fun surahMetadataDao(): SurahMetadataDao
 }

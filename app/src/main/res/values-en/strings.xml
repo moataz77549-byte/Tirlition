@@ -28,4 +28,12 @@
     <string name="error_timeout">The connection took longer than expected.</string>
     <string name="error_parsing">The source data could not be read.</string>
     <string name="error_unknown">An unexpected error occurred. Please retry.</string>
+    <string name="search_radios">Search radios</string>
+    <string name="live">Live</string>
+    <string name="audio_mushafs">Audio mushafs</string>
+    <string name="surahs">Available surahs</string>
+    <string name="available_surahs">Available: %1$d surahs</string>
+    <string name="stream_address">Stream address</string>
+    <string name="recording_unavailable">Recording is unavailable for this source.</string>
+    <string name="player_next_stage">Playback will be enabled in the player milestone.</string>
 </resources>

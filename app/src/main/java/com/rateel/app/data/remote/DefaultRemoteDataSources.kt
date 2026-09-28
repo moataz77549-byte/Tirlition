@@ -5,6 +5,7 @@ import com.rateel.app.domain.model.Mushaf
 import com.rateel.app.domain.model.RadioStation
 import com.rateel.app.domain.model.Reciter
 import com.rateel.app.domain.model.SurahAudio
+import com.rateel.app.domain.model.SurahMetadata
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -26,4 +27,5 @@ class EmptyReciterRemoteDataSource @Inject constructor() : ReciterRemoteDataSour
 class EmptyQuranAudioRemoteDataSource @Inject constructor() : QuranAudioRemoteDataSource {
     override suspend fun fetchMushafs(reciterId: String): AppResult<List<Mushaf>> = AppResult.Empty
     override suspend fun fetchTracks(mushafId: String): AppResult<List<SurahAudio>> = AppResult.Empty
+    override suspend fun fetchSurahMetadata(): AppResult<List<SurahMetadata>> = AppResult.Empty
 }

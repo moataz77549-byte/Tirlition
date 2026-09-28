@@ -99,5 +99,21 @@ object PlannedSourceCatalog {
         notes = "Content APIs require server-held credentials. Generic storage is limited to one week unless an explicit exception or documented Content Sync resource applies.",
     )
 
-    val all = listOf(mp3QuranV3, qurangoStreams, quranFoundation)
+    val mp3QuranLiveTv = ContentSource(
+        id = SourceIds.MP3_QURAN_LIVE_TV,
+        name = "MP3Quran live channels",
+        provider = "MP3Quran.net / channel broadcaster",
+        type = SourceType.CONTENT_PROVIDER,
+        website = "https://www.mp3quran.net/",
+        apiBaseUrl = "https://www.mp3quran.net/api/v3/live-tv",
+        documentationUrl = "https://www.mp3quran.net/ar/api/2",
+        licenseType = LicenseType.UNKNOWN,
+        allowStreaming = true,
+        isOfficial = true,
+        isVerified = true,
+        lastTechnicalCheckAt = VERIFIED_2026_09_28,
+        notes = "Audio from the Quran and Sunna live TV channels. Asset host and downstream rights require separate verification; streaming only.",
+    )
+
+    val all = listOf(mp3QuranV3, qurangoStreams, quranFoundation, mp3QuranLiveTv)
 }

@@ -26,8 +26,10 @@ interface ReciterRepository {
 
 interface MushafRepository {
     fun observeMushafs(reciterId: String): Flow<List<Mushaf>>
+    suspend fun refresh(reciterId: String): AppResult<Unit>
 }
 
 interface AudioRepository {
     fun observeTracks(mushafId: String): Flow<List<SurahAudio>>
+    suspend fun refresh(mushafId: String): AppResult<Unit>
 }

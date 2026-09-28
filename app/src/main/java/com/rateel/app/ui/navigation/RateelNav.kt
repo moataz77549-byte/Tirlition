@@ -23,6 +23,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import android.net.Uri
 import com.rateel.app.R
 
 enum class Destination(
@@ -46,7 +47,9 @@ fun RateelApp() {
 
     Scaffold(
         bottomBar = {
-            if (currentRoute !in secondaryRoutes) {
+            if (currentRoute !in secondaryRoutes && currentRoute?.startsWith("reciter/") != true &&
+                currentRoute?.startsWith("mushaf/") != true && currentRoute?.startsWith("radio/") != true &&
+                currentRoute?.startsWith("surah/") != true) {
                 NavigationBar {
                     Destination.entries.forEach { destination ->
                         NavigationBarItem(
@@ -81,8 +84,38 @@ fun RateelApp() {
             composable(Destination.HOME.route) {
                 HomeRoute(onSettings = { navController.navigate("settings") })
             }
-            composable(Destination.RADIO.route) { Placeholder(R.string.radios) }
-            composable(Destination.RECITERS.route) { Placeholder(R.string.reciters) }
+            composable(Destination.RADIO.route) {
+                RadiosRoute(onStation = { navController.navigate("radio/${Uri.encode(it)}") })
+            }
+            composable(Destination.RECITERS.route) {
+                RecitersRoute(onReciter = { navController.navigate("reciter/${Uri.encode(it)}") })
+            }
+            composable("radio/{id}") { entry ->
+                RadioDetailRoute(
+                    id = Uri.decode(entry.arguments?.getString("id").orEmpty()),
+                    onBack = { navController.popBackStack() },
+                )
+            }
+            composable("reciter/{id}") { entry ->
+                MushafsRoute(
+                    id = Uri.decode(entry.arguments?.getString("id").orEmpty()),
+                    onBack = { navController.popBackStack() },
+                    onMushaf = { navController.navigate("mushaf/${Uri.encode(it)}") },
+                )
+            }
+            composable("mushaf/{id}") { entry ->
+                SurahsRoute(
+                    id = Uri.decode(entry.arguments?.getString("id").orEmpty()),
+                    onBack = { navController.popBackStack() },
+                    onSurah = { navController.navigate("surah/${Uri.encode(it)}") },
+                )
+            }
+            composable("surah/{id}") { entry ->
+                SurahDetailRoute(
+                    id = Uri.decode(entry.arguments?.getString("id").orEmpty()),
+                    onBack = { navController.popBackStack() },
+                )
+            }
             composable(Destination.DOWNLOADS.route) { Placeholder(R.string.downloads) }
             composable(Destination.LIBRARY.route) { Placeholder(R.string.library) }
             composable("settings") {

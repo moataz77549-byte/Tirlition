@@ -2,14 +2,19 @@ package com.rateel.app.data.repository
 
 import com.rateel.app.core.model.AppResult
 import com.rateel.app.data.local.AudioTrackDao
+import com.rateel.app.data.local.AudioTrackEntity
 import com.rateel.app.data.local.MushafDao
+import com.rateel.app.data.local.MushafEntity
 import com.rateel.app.data.local.RadioDao
 import com.rateel.app.data.local.RadioEntity
 import com.rateel.app.data.local.RadioStreamEntity
 import com.rateel.app.data.local.ReciterDao
 import com.rateel.app.data.local.ReciterEntity
+import com.rateel.app.data.local.SurahMetadataDao
+import com.rateel.app.data.local.SurahMetadataEntity
 import com.rateel.app.data.remote.RadioRemoteDataSource
 import com.rateel.app.data.remote.ReciterRemoteDataSource
+import com.rateel.app.data.remote.QuranAudioRemoteDataSource
 import com.rateel.app.domain.model.Mushaf
 import com.rateel.app.domain.model.RadioStation
 import com.rateel.app.domain.model.Reciter
@@ -159,6 +164,7 @@ class OfflineReciterRepository @Inject constructor(
 @Singleton
 class LocalMushafRepository @Inject constructor(
     private val dao: MushafDao,
+    private val remote: QuranAudioRemoteDataSource,
 ) : MushafRepository {
     override fun observeMushafs(reciterId: String): Flow<List<Mushaf>> =
         dao.observeByReciter(reciterId).map { items ->
@@ -175,14 +181,35 @@ class LocalMushafRepository @Inject constructor(
                     format = it.format,
                     totalSurahs = it.totalSurahs,
                     artworkUrl = it.artworkUrl,
+                    availableSurahs = it.availableSurahs.split(',').mapNotNull { value -> value.toIntOrNull() }.toSet(),
                 )
             }
+        }
+
+    override suspend fun refresh(reciterId: String): AppResult<Unit> =
+        when (val result = remote.fetchMushafs(reciterId)) {
+            is AppResult.Success -> {
+                dao.upsertAll(result.data.map {
+                    MushafEntity(
+                        id = it.id, sourceId = it.sourceId, reciterId = it.reciterId,
+                        name = it.name, riwaya = it.riwaya, description = it.description,
+                        source = it.source, quality = it.quality, format = it.format,
+                        totalSurahs = it.totalSurahs, artworkUrl = it.artworkUrl,
+                        availableSurahs = it.availableSurahs.sorted().joinToString(","),
+                    )
+                })
+                AppResult.Success(Unit)
+            }
+            AppResult.Empty -> AppResult.Empty
+            is AppResult.Error -> result
         }
 }
 
 @Singleton
 class LocalAudioRepository @Inject constructor(
     private val dao: AudioTrackDao,
+    private val remote: QuranAudioRemoteDataSource,
+    private val surahDao: SurahMetadataDao,
 ) : AudioRepository {
     override fun observeTracks(mushafId: String): Flow<List<SurahAudio>> =
         dao.observeByMushaf(mushafId).map { items ->
@@ -204,5 +231,30 @@ class LocalAudioRepository @Inject constructor(
                     downloadable = it.downloadable,
                 )
             }
+        }
+
+    override suspend fun refresh(mushafId: String): AppResult<Unit> =
+        when (val result = remote.fetchTracks(mushafId)) {
+            is AppResult.Success -> {
+                dao.upsertAll(result.data.map {
+                    AudioTrackEntity(
+                        id = it.id, sourceId = it.sourceId, mushafId = it.mushafId,
+                        surahNumber = it.surahNumber, surahNameArabic = it.surahNameArabic,
+                        surahNameEnglish = it.surahNameEnglish, audioUrl = it.audioUrl,
+                        durationMs = it.durationMs, fileSizeBytes = it.fileSizeBytes,
+                        format = it.format, bitrateKbps = it.bitrateKbps, quality = it.quality,
+                        checksum = it.checksum, downloadable = it.downloadable,
+                    )
+                })
+                val metadata = remote.fetchSurahMetadata()
+                if (metadata is AppResult.Success) {
+                    surahDao.upsertAll(metadata.data.map {
+                        SurahMetadataEntity(it.number, it.name, it.startPage, it.endPage, it.isMakki)
+                    })
+                }
+                AppResult.Success(Unit)
+            }
+            AppResult.Empty -> AppResult.Empty
+            is AppResult.Error -> result
         }
 }

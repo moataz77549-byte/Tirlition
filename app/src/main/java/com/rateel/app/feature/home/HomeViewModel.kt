@@ -7,6 +7,7 @@ import com.rateel.app.core.model.AppResult
 import com.rateel.app.core.network.NetworkStatusProvider
 import com.rateel.app.domain.repository.RadioRepository
 import com.rateel.app.domain.repository.ReciterRepository
+import com.rateel.app.domain.repository.SourceRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -19,6 +20,7 @@ import kotlinx.coroutines.launch
 class HomeViewModel @Inject constructor(
     private val radios: RadioRepository,
     private val reciters: ReciterRepository,
+    private val sources: SourceRepository,
     network: NetworkStatusProvider,
 ) : ViewModel() {
     private val refreshing = MutableStateFlow(false)
@@ -59,6 +61,7 @@ class HomeViewModel @Inject constructor(
         viewModelScope.launch {
             refreshing.value = true
             messageRes.value = null
+            sources.ensureBuiltInCatalog()
             val radioResult = runCatching { radios.refresh() }
                 .getOrElse { AppResult.Error.Unknown(it) }
             val reciterResult = runCatching { reciters.refresh() }
