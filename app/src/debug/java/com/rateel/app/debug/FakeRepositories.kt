@@ -58,6 +58,7 @@ class FakeMushafRepository(
 ) : MushafRepository {
     private val state = MutableStateFlow(items)
     override fun observeMushafs(reciterId: String): Flow<List<Mushaf>> = state
+    override suspend fun refresh(reciterId: String): AppResult<Unit> = AppResult.Success(Unit)
 }
 
 class FakeAudioRepository(
@@ -65,4 +66,5 @@ class FakeAudioRepository(
 ) : AudioRepository {
     private val state = MutableStateFlow(items)
     override fun observeTracks(mushafId: String): Flow<List<SurahAudio>> = state
+    override suspend fun refresh(mushafId: String): AppResult<Unit> = AppResult.Success(Unit)
 }

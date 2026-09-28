@@ -95,4 +95,5 @@ object SourceIds {
     const val MP3_QURAN_V3 = "mp3quran-v3"
     const val QURANGO_STREAMS = "qurango-streams"
     const val QURAN_FOUNDATION = "quran-foundation"
+    const val MP3_QURAN_LIVE_TV = "mp3quran-live-tv"
 }

@@ -4,9 +4,11 @@ import com.rateel.app.core.model.AppResult
 import com.rateel.app.core.network.NetworkStatusProvider
 import com.rateel.app.domain.model.RadioStation
 import com.rateel.app.domain.model.Reciter
+import com.rateel.app.domain.model.ContentSource
 import com.rateel.app.domain.model.SourceIds
 import com.rateel.app.domain.repository.RadioRepository
 import com.rateel.app.domain.repository.ReciterRepository
+import com.rateel.app.domain.repository.SourceRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
@@ -55,6 +57,11 @@ class HomeViewModelTest {
         val viewModel = HomeViewModel(
             radios = FakeRadioRepository(listOf(radio)),
             reciters = FakeReciterRepository(listOf(reciter)),
+            sources = object : SourceRepository {
+                override fun observeSources(): Flow<List<ContentSource>> = MutableStateFlow(emptyList())
+                override suspend fun getSource(id: String): ContentSource? = null
+                override suspend fun ensureBuiltInCatalog() = Unit
+            },
             network = object : NetworkStatusProvider {
                 override val isOnline: Flow<Boolean> = MutableStateFlow(true)
             },

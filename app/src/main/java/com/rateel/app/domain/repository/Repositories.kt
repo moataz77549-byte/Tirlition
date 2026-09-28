@@ -17,17 +17,21 @@ interface SourceRepository {
 interface RadioRepository {
     fun observeRadios(): Flow<List<RadioStation>>
     suspend fun refresh(): AppResult<Unit>
+    suspend fun refreshIfStale(): AppResult<Unit> = refresh()
 }
 
 interface ReciterRepository {
     fun observeReciters(): Flow<List<Reciter>>
     suspend fun refresh(): AppResult<Unit>
+    suspend fun refreshIfStale(): AppResult<Unit> = refresh()
 }
 
 interface MushafRepository {
     fun observeMushafs(reciterId: String): Flow<List<Mushaf>>
+    suspend fun refresh(reciterId: String): AppResult<Unit>
 }
 
 interface AudioRepository {
     fun observeTracks(mushafId: String): Flow<List<SurahAudio>>
+    suspend fun refresh(mushafId: String): AppResult<Unit>
 }

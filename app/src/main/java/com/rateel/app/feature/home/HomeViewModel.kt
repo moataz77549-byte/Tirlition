@@ -7,6 +7,7 @@ import com.rateel.app.core.model.AppResult
 import com.rateel.app.core.network.NetworkStatusProvider
 import com.rateel.app.domain.repository.RadioRepository
 import com.rateel.app.domain.repository.ReciterRepository
+import com.rateel.app.domain.repository.SourceRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -19,6 +20,7 @@ import kotlinx.coroutines.launch
 class HomeViewModel @Inject constructor(
     private val radios: RadioRepository,
     private val reciters: ReciterRepository,
+    private val sources: SourceRepository,
     network: NetworkStatusProvider,
 ) : ViewModel() {
     private val refreshing = MutableStateFlow(false)
@@ -50,18 +52,19 @@ class HomeViewModel @Inject constructor(
 
     fun onAction(action: HomeAction) {
         when (action) {
-            HomeAction.Retry -> refresh()
+            HomeAction.Retry -> refresh(force = true)
             is HomeAction.OpenRadio -> Unit
         }
     }
 
-    private fun refresh() {
+    private fun refresh(force: Boolean = false) {
         viewModelScope.launch {
             refreshing.value = true
             messageRes.value = null
-            val radioResult = runCatching { radios.refresh() }
+            sources.ensureBuiltInCatalog()
+            val radioResult = runCatching { if (force) radios.refresh() else radios.refreshIfStale() }
                 .getOrElse { AppResult.Error.Unknown(it) }
-            val reciterResult = runCatching { reciters.refresh() }
+            val reciterResult = runCatching { if (force) reciters.refresh() else reciters.refreshIfStale() }
                 .getOrElse { AppResult.Error.Unknown(it) }
 
             messageRes.value = listOf(radioResult, reciterResult)

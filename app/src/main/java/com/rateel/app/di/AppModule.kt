@@ -13,9 +13,9 @@ import com.rateel.app.data.local.RateelDatabase
 import com.rateel.app.data.local.RateelMigrations
 import com.rateel.app.data.local.ReciterDao
 import com.rateel.app.data.local.SourceDao
-import com.rateel.app.data.remote.EmptyQuranAudioRemoteDataSource
-import com.rateel.app.data.remote.EmptyRadioRemoteDataSource
-import com.rateel.app.data.remote.EmptyReciterRemoteDataSource
+import com.rateel.app.data.local.SurahMetadataDao
+import com.rateel.app.data.local.CacheMetadataDao
+import com.rateel.app.data.remote.Mp3QuranV3DataSource
 import com.rateel.app.data.remote.QuranAudioRemoteDataSource
 import com.rateel.app.data.remote.RadioRemoteDataSource
 import com.rateel.app.data.remote.ReciterRemoteDataSource
@@ -60,6 +60,8 @@ object AppModule {
     @Provides fun reciterDao(db: RateelDatabase): ReciterDao = db.reciterDao()
     @Provides fun mushafDao(db: RateelDatabase): MushafDao = db.mushafDao()
     @Provides fun audioTrackDao(db: RateelDatabase): AudioTrackDao = db.audioTrackDao()
+    @Provides fun surahMetadataDao(db: RateelDatabase): SurahMetadataDao = db.surahMetadataDao()
+    @Provides fun cacheMetadataDao(db: RateelDatabase): CacheMetadataDao = db.cacheMetadataDao()
 
     @Provides
     @Singleton
@@ -104,9 +106,9 @@ object AppModule {
 @InstallIn(SingletonComponent::class)
 abstract class BindingsModule {
     @Binds abstract fun bindNetworkStatus(impl: NetworkMonitor): NetworkStatusProvider
-    @Binds abstract fun bindRadioRemote(impl: EmptyRadioRemoteDataSource): RadioRemoteDataSource
-    @Binds abstract fun bindReciterRemote(impl: EmptyReciterRemoteDataSource): ReciterRemoteDataSource
-    @Binds abstract fun bindQuranAudioRemote(impl: EmptyQuranAudioRemoteDataSource): QuranAudioRemoteDataSource
+    @Binds abstract fun bindRadioRemote(impl: Mp3QuranV3DataSource): RadioRemoteDataSource
+    @Binds abstract fun bindReciterRemote(impl: Mp3QuranV3DataSource): ReciterRemoteDataSource
+    @Binds abstract fun bindQuranAudioRemote(impl: Mp3QuranV3DataSource): QuranAudioRemoteDataSource
     @Binds abstract fun bindSourceRepository(impl: LocalSourceRepository): SourceRepository
     @Binds abstract fun bindRadioRepository(impl: OfflineRadioRepository): RadioRepository
     @Binds abstract fun bindReciterRepository(impl: OfflineReciterRepository): ReciterRepository

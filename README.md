@@ -6,6 +6,12 @@ Rateel is an Arabic-first Android application for Quranic and Islamic radio stre
 
 This milestone establishes the Android foundation only. It intentionally does not implement advanced playback, background media controls, production downloads, live recording, favorites/history UX, or the later Quran/text/prayer modules.
 
+## Milestone 2 — Audio catalog (in progress)
+
+MP3Quran v3 now provides Arabic radio, reciter, mushaf, riwaya, surah, and live-channel metadata through a dedicated HTTPS adapter. The repository stores the normalized catalog in Room and displays cached radio/reciter/mushaf/surah lists offline. The Quran and Sunna live channels are audio-first catalog entries. Their HLS assets are streaming-only while broadcaster rights remain unverified.
+
+The next milestone provides Media3 playback. Catalog detail pages do not pretend to play audio. Downloads and stream recording remain unavailable until their dedicated milestones and source capability checks are enforced.
+
 ### Stack
 
 Kotlin, Jetpack Compose + Material 3, Navigation Compose, Coroutines/Flow, Room, DataStore, Retrofit/OkHttp, Kotlin Serialization, Hilt, and Coil.
