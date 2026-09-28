@@ -15,6 +15,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.rateel.app.R
+import com.rateel.app.core.model.AppResult
 import com.rateel.app.domain.model.Mushaf
 import com.rateel.app.domain.model.SurahAudio
 import com.rateel.app.feature.catalog.CatalogViewModel
@@ -23,6 +24,8 @@ import com.rateel.app.feature.catalog.CatalogViewModel
 @Composable
 fun RadiosRoute(onStation: (String) -> Unit, vm: CatalogViewModel = hiltViewModel()) {
     val radios by vm.radioRows.collectAsStateWithLifecycle()
+    val error by vm.error.collectAsStateWithLifecycle()
+    val refreshing by vm.refreshing.collectAsStateWithLifecycle()
     var search by remember { mutableStateOf("") }
     LaunchedEffect(Unit) { vm.refreshCatalog() }
     Scaffold(topBar = {
@@ -32,6 +35,8 @@ fun RadiosRoute(onStation: (String) -> Unit, vm: CatalogViewModel = hiltViewMode
             } })
     }) { padding ->
         Column(Modifier.padding(padding)) {
+            if (refreshing) LinearProgressIndicator(Modifier.fillMaxWidth())
+            error?.let { Text(stringResource(it.messageRes()), Modifier.padding(12.dp)) }
             OutlinedTextField(value = search, onValueChange = { search = it },
                 label = { Text(stringResource(R.string.search_radios)) },
                 modifier = Modifier.fillMaxWidth().padding(12.dp), singleLine = true)
@@ -41,6 +46,7 @@ fun RadiosRoute(onStation: (String) -> Unit, vm: CatalogViewModel = hiltViewMode
                         it.station.sourceId.contains(search, ignoreCase = true) ||
                         it.station.category.orEmpty().contains(search, ignoreCase = true)
                 }
+                if (filtered.isEmpty() && !refreshing) item { Text(stringResource(R.string.home_empty)) }
                 items(filtered, key = { it.station.id }) { row ->
                     Card(Modifier.fillMaxWidth().clickable { onStation(row.station.id) }) {
                         ListItem(headlineContent = { Text(row.station.nameArabic) },
@@ -102,9 +108,14 @@ fun SurahDetailRoute(id: String, onBack: () -> Unit, vm: CatalogViewModel = hilt
 @Composable
 fun RecitersRoute(onReciter: (String) -> Unit, vm: CatalogViewModel = hiltViewModel()) {
     val reciters by vm.reciterRows.collectAsStateWithLifecycle()
+    val error by vm.error.collectAsStateWithLifecycle()
+    val refreshing by vm.refreshing.collectAsStateWithLifecycle()
     LaunchedEffect(Unit) { vm.refreshCatalog() }
     Scaffold(topBar = { TopAppBar(title = { Text(stringResource(R.string.reciters)) }) }) { padding ->
         LazyColumn(Modifier.padding(padding), contentPadding = PaddingValues(12.dp)) {
+            if (refreshing) item { LinearProgressIndicator(Modifier.fillMaxWidth()) }
+            error?.let { item { Text(stringResource(it.messageRes())) } }
+            if (reciters.isEmpty() && !refreshing) item { Text(stringResource(R.string.home_empty)) }
             items(reciters, key = { it.id }) { reciter ->
                 ListItem(headlineContent = { Text(reciter.nameArabic) },
                     supportingContent = { Text(reciter.sourceId) },
@@ -120,8 +131,11 @@ fun MushafsRoute(id: String, onBack: () -> Unit, onMushaf: (String) -> Unit,
                  vm: CatalogViewModel = hiltViewModel()) {
     val flow = remember(id) { vm.mushafs(id) }
     val rows by flow.collectAsStateWithLifecycle(initialValue = emptyList())
+    val error by vm.error.collectAsStateWithLifecycle()
     LaunchedEffect(id) { vm.refreshMushafs(id) }
     CatalogListScaffold(stringResource(R.string.audio_mushafs), onBack) {
+        error?.let { item { Text(stringResource(it.messageRes())) } }
+        if (rows.isEmpty()) item { Text(stringResource(R.string.home_empty)) }
         items(rows, key = { it.id }) { mushaf: Mushaf ->
             ListItem(headlineContent = { Text(mushaf.name) },
                 supportingContent = { Text("${mushaf.riwaya} · ${stringResource(R.string.available_surahs, mushaf.availableSurahs.size)} · ${mushaf.sourceId}") },
@@ -136,14 +150,25 @@ fun SurahsRoute(id: String, onBack: () -> Unit, onSurah: (String) -> Unit,
                 vm: CatalogViewModel = hiltViewModel()) {
     val flow = remember(id) { vm.tracks(id) }
     val rows by flow.collectAsStateWithLifecycle(initialValue = emptyList())
+    val error by vm.error.collectAsStateWithLifecycle()
     LaunchedEffect(id) { vm.refreshTracks(id) }
     CatalogListScaffold(stringResource(R.string.surahs), onBack) {
+        error?.let { item { Text(stringResource(it.messageRes())) } }
+        if (rows.isEmpty()) item { Text(stringResource(R.string.home_empty)) }
         items(rows, key = { it.id }) { track: SurahAudio ->
             ListItem(headlineContent = { Text("${track.surahNumber}. ${track.surahNameArabic}") },
                 supportingContent = { Text(track.sourceId) },
                 modifier = Modifier.fillMaxWidth().clickable { onSurah(track.id) })
         }
     }
+}
+
+private fun AppResult.Error.messageRes(): Int = when (this) {
+    AppResult.Error.Network -> R.string.error_network
+    AppResult.Error.Server -> R.string.error_server
+    AppResult.Error.Timeout -> R.string.error_timeout
+    AppResult.Error.Parsing -> R.string.error_parsing
+    is AppResult.Error.Unknown -> R.string.error_unknown
 }
 
 @OptIn(ExperimentalMaterial3Api::class)

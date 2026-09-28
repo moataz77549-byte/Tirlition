@@ -39,6 +39,15 @@ Last review: **2026-09-28**.
 - **Rights checked:** 2026-09-28.
 - **Implementation:** station catalog provenance and stream transport provenance are separate; a Qurango endpoint receives its own `sourceId`.
 
+## mp3quran-live-tv
+
+- **Source ID:** `mp3quran-live-tv`
+- **Returned by:** MP3Quran v3 `/live-tv`.
+- **Content:** Quran and Sunna live channels. The current API points to HLS assets hosted by a separate broadcaster domain.
+- **Policy:** streaming only. Recording, downloads, caching, offline playback, and sharing the media are disabled until the actual broadcaster's rights are established.
+- **Technical rule:** the API response URL is fetched each refresh; no HLS URL is bundled in the APK. The resolved host is distinct from the API's source of discovery.
+- **Checked:** 2026-09-28. This check confirms API metadata, not a blanket grant for media redistribution.
+
 ## quran-foundation
 
 - **Source ID:** `quran-foundation`
@@ -73,3 +82,4 @@ Saudi Quran radio, Makkah Quran broadcasts, Madinah/Sunnah broadcasts, and other
 6. App-private managed storage is the default for downloads and recordings.
 7. Recording means saving stream bytes, never microphone capture.
 8. Provider-rights changes require updating this registry and runtime policy before enabling new behavior.
+9. `ContentCapabilityResolver` intersects source permissions with the actual asset host and live-channel type. A third-party asset never inherits MP3Quran's download/offline grant merely because the API returned its URL.
