@@ -40,11 +40,11 @@ class CatalogViewModel @Inject constructor(
     val error = MutableStateFlow<AppResult.Error?>(null)
     val refreshing = MutableStateFlow(false)
 
-    fun refreshCatalog() = viewModelScope.launch {
+    fun refreshCatalog(force: Boolean = false) = viewModelScope.launch {
         refreshing.value = true
         sources.ensureBuiltInCatalog()
-        val radioResult = radios.refresh()
-        val reciterResult = reciters.refresh()
+        val radioResult = if (force) radios.refresh() else radios.refreshIfStale()
+        val reciterResult = if (force) reciters.refresh() else reciters.refreshIfStale()
         error.value = (radioResult as? AppResult.Error) ?: (reciterResult as? AppResult.Error)
         refreshing.value = false
     }

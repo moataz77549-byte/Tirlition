@@ -3,6 +3,8 @@ package com.rateel.app.data.repository
 import com.rateel.app.core.model.AppResult
 import com.rateel.app.data.local.AudioTrackDao
 import com.rateel.app.data.local.AudioTrackEntity
+import com.rateel.app.data.local.CacheMetadataDao
+import com.rateel.app.data.local.CacheMetadataEntity
 import com.rateel.app.data.local.MushafDao
 import com.rateel.app.data.local.MushafEntity
 import com.rateel.app.data.local.RadioDao
@@ -29,6 +31,8 @@ import javax.inject.Inject
 import javax.inject.Singleton
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
+
+private const val CATALOG_TTL_MS = 12L * 60 * 60 * 1000
 
 private fun com.rateel.app.data.local.RadioWithStreams.toDomain(): RadioStation =
     RadioStation(
@@ -66,6 +70,7 @@ private fun com.rateel.app.data.local.RadioWithStreams.toDomain(): RadioStation 
 class OfflineRadioRepository @Inject constructor(
     private val dao: RadioDao,
     private val remote: RadioRemoteDataSource,
+    private val cache: CacheMetadataDao,
 ) : RadioRepository {
     override fun observeRadios(): Flow<List<RadioStation>> =
         dao.observeAll().map { items -> items.map { it.toDomain() } }
@@ -109,17 +114,27 @@ class OfflineRadioRepository @Inject constructor(
                     }
                 }
                 dao.replaceAll(stations, streams)
+                cache.upsert(CacheMetadataEntity("mp3quran:radios", System.currentTimeMillis(),
+                    System.currentTimeMillis() + CATALOG_TTL_MS))
                 AppResult.Success(Unit)
             }
             AppResult.Empty -> AppResult.Empty
             is AppResult.Error -> result
         }
+
+    override suspend fun refreshIfStale(): AppResult<Unit> {
+        if ((cache.get("mp3quran:radios")?.expiresAt ?: 0) > System.currentTimeMillis()) {
+            return AppResult.Success(Unit)
+        }
+        return refresh()
+    }
 }
 
 @Singleton
 class OfflineReciterRepository @Inject constructor(
     private val dao: ReciterDao,
     private val remote: ReciterRemoteDataSource,
+    private val cache: CacheMetadataDao,
 ) : ReciterRepository {
     override fun observeReciters(): Flow<List<Reciter>> =
         dao.observeAll().map { items ->
@@ -154,11 +169,20 @@ class OfflineReciterRepository @Inject constructor(
                         )
                     },
                 )
+                cache.upsert(CacheMetadataEntity("mp3quran:reciters", System.currentTimeMillis(),
+                    System.currentTimeMillis() + CATALOG_TTL_MS))
                 AppResult.Success(Unit)
             }
             AppResult.Empty -> AppResult.Empty
             is AppResult.Error -> result
         }
+
+    override suspend fun refreshIfStale(): AppResult<Unit> {
+        if ((cache.get("mp3quran:reciters")?.expiresAt ?: 0) > System.currentTimeMillis()) {
+            return AppResult.Success(Unit)
+        }
+        return refresh()
+    }
 }
 
 @Singleton

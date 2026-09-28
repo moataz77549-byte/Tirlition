@@ -30,7 +30,7 @@ fun RadiosRoute(onStation: (String) -> Unit, vm: CatalogViewModel = hiltViewMode
     LaunchedEffect(Unit) { vm.refreshCatalog() }
     Scaffold(topBar = {
         TopAppBar(title = { Text(stringResource(R.string.radios)) },
-            actions = { IconButton(onClick = { vm.refreshCatalog() }) {
+            actions = { IconButton(onClick = { vm.refreshCatalog(force = true) }) {
                 Icon(Icons.Outlined.Refresh, contentDescription = stringResource(R.string.retry))
             } })
     }) { padding ->

@@ -81,6 +81,15 @@ interface SurahMetadataDao {
     suspend fun upsertAll(items: List<SurahMetadataEntity>)
 }
 
+@Dao
+interface CacheMetadataDao {
+    @Query("SELECT * FROM cache_metadata WHERE `key` = :key LIMIT 1")
+    suspend fun get(key: String): CacheMetadataEntity?
+
+    @Upsert
+    suspend fun upsert(item: CacheMetadataEntity)
+}
+
 @Database(
     entities = [
         ContentSourceEntity::class,
@@ -107,4 +116,5 @@ abstract class RateelDatabase : RoomDatabase() {
     abstract fun mushafDao(): MushafDao
     abstract fun audioTrackDao(): AudioTrackDao
     abstract fun surahMetadataDao(): SurahMetadataDao
+    abstract fun cacheMetadataDao(): CacheMetadataDao
 }

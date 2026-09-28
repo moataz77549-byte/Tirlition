@@ -52,19 +52,19 @@ class HomeViewModel @Inject constructor(
 
     fun onAction(action: HomeAction) {
         when (action) {
-            HomeAction.Retry -> refresh()
+            HomeAction.Retry -> refresh(force = true)
             is HomeAction.OpenRadio -> Unit
         }
     }
 
-    private fun refresh() {
+    private fun refresh(force: Boolean = false) {
         viewModelScope.launch {
             refreshing.value = true
             messageRes.value = null
             sources.ensureBuiltInCatalog()
-            val radioResult = runCatching { radios.refresh() }
+            val radioResult = runCatching { if (force) radios.refresh() else radios.refreshIfStale() }
                 .getOrElse { AppResult.Error.Unknown(it) }
-            val reciterResult = runCatching { reciters.refresh() }
+            val reciterResult = runCatching { if (force) reciters.refresh() else reciters.refreshIfStale() }
                 .getOrElse { AppResult.Error.Unknown(it) }
 
             messageRes.value = listOf(radioResult, reciterResult)

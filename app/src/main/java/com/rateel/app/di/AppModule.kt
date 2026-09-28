@@ -14,6 +14,7 @@ import com.rateel.app.data.local.RateelMigrations
 import com.rateel.app.data.local.ReciterDao
 import com.rateel.app.data.local.SourceDao
 import com.rateel.app.data.local.SurahMetadataDao
+import com.rateel.app.data.local.CacheMetadataDao
 import com.rateel.app.data.remote.Mp3QuranV3DataSource
 import com.rateel.app.data.remote.QuranAudioRemoteDataSource
 import com.rateel.app.data.remote.RadioRemoteDataSource
@@ -60,6 +61,7 @@ object AppModule {
     @Provides fun mushafDao(db: RateelDatabase): MushafDao = db.mushafDao()
     @Provides fun audioTrackDao(db: RateelDatabase): AudioTrackDao = db.audioTrackDao()
     @Provides fun surahMetadataDao(db: RateelDatabase): SurahMetadataDao = db.surahMetadataDao()
+    @Provides fun cacheMetadataDao(db: RateelDatabase): CacheMetadataDao = db.cacheMetadataDao()
 
     @Provides
     @Singleton

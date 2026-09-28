@@ -2,6 +2,8 @@ package com.rateel.app.data.repository
 
 import com.rateel.app.core.model.AppResult
 import com.rateel.app.data.local.RadioDao
+import com.rateel.app.data.local.CacheMetadataDao
+import com.rateel.app.data.local.CacheMetadataEntity
 import com.rateel.app.data.local.RadioEntity
 import com.rateel.app.data.local.RadioStreamEntity
 import com.rateel.app.data.local.RadioWithStreams
@@ -42,6 +44,10 @@ class OfflineRadioRepositoryTest {
                 override suspend fun fetchRadios(): AppResult<List<RadioStation>> =
                     AppResult.Success(listOf(remoteItem))
             },
+            cache = object : CacheMetadataDao {
+                override suspend fun get(key: String): CacheMetadataEntity? = null
+                override suspend fun upsert(item: CacheMetadataEntity) = Unit
+            },
         )
 
         assertTrue(repository.refresh() is AppResult.Success)
@@ -60,7 +66,6 @@ class OfflineRadioRepositoryTest {
 
         protected override suspend fun insertStations(items: List<RadioEntity>) = Unit
         protected override suspend fun insertStreams(items: List<RadioStreamEntity>) = Unit
-        protected override suspend fun deleteStations() = Unit
 
         override suspend fun replaceAll(
             stations: List<RadioEntity>,
