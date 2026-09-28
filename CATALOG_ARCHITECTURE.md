@@ -10,4 +10,4 @@ The user-facing source and rights catalog is local today. Its booleans can later
 
 Room schema v2 adds a serialized available-surah set to mushafs and a surah metadata table. Migration 1→2 is explicit. There is no destructive fallback. Device-specific favorites, history, and download/recording records stay local.
 
-Current limits: playback starts in stage 3; downloading starts in stage 4. Source health is `UNKNOWN` until a playback attempt or bounded stream validation. API responses are refreshed on opening catalog routes and kept in Room for offline metadata display.
+Current limits: playback starts in stage 3; downloading starts in stage 4. Source health is `UNKNOWN` until a playback attempt or bounded on-demand HEAD check. The validator records redirect destination, host, and content type without opening all stations. API metadata refreshes at most every 12 hours on catalog entry, or immediately by explicit retry, and stays in Room for offline display.

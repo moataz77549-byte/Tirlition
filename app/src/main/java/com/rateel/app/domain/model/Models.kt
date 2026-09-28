@@ -1,6 +1,6 @@
 package com.rateel.app.domain.model
 
-enum class StreamHealth { ONLINE, OFFLINE, UNKNOWN, DEGRADED }
+enum class StreamHealth { ONLINE, OFFLINE, UNKNOWN, DEGRADED, UNSUPPORTED, BLOCKED }
 
 data class StreamEndpoint(
     val sourceId: String,

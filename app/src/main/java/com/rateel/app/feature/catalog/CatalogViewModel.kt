@@ -3,6 +3,8 @@ package com.rateel.app.feature.catalog
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.rateel.app.core.model.AppResult
+import com.rateel.app.data.provider.StreamValidation
+import com.rateel.app.data.provider.StreamValidator
 import com.rateel.app.domain.model.*
 import com.rateel.app.domain.repository.*
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -19,6 +21,7 @@ class CatalogViewModel @Inject constructor(
     private val mushafs: MushafRepository,
     private val audio: AudioRepository,
     private val sources: SourceRepository,
+    private val validator: StreamValidator,
 ) : ViewModel() {
     val radioRows = combine(radios.observeRadios(), sources.observeSources()) { stations, rights ->
         val byId = rights.associateBy { it.id }
@@ -39,6 +42,7 @@ class CatalogViewModel @Inject constructor(
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
     val error = MutableStateFlow<AppResult.Error?>(null)
     val refreshing = MutableStateFlow(false)
+    val streamValidation = MutableStateFlow<StreamValidation?>(null)
 
     fun refreshCatalog(force: Boolean = false) = viewModelScope.launch {
         refreshing.value = true
@@ -59,5 +63,9 @@ class CatalogViewModel @Inject constructor(
     fun refreshTracks(mushafId: String) = viewModelScope.launch {
         sources.ensureBuiltInCatalog()
         error.value = audio.refresh(mushafId) as? AppResult.Error
+    }
+
+    fun validateStream(url: String) = viewModelScope.launch {
+        streamValidation.value = validator.check(url)
     }
 }

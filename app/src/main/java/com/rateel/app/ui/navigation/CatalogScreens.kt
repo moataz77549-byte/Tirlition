@@ -64,8 +64,11 @@ fun RadiosRoute(onStation: (String) -> Unit, vm: CatalogViewModel = hiltViewMode
 @Composable
 fun RadioDetailRoute(id: String, onBack: () -> Unit, vm: CatalogViewModel = hiltViewModel()) {
     val radios by vm.radioRows.collectAsStateWithLifecycle()
+    val validation by vm.streamValidation.collectAsStateWithLifecycle()
     val row = radios.firstOrNull { it.station.id == id }
     LaunchedEffect(id) { vm.refreshCatalog() }
+    val endpointUrl = row?.station?.streams?.firstOrNull()?.url
+    LaunchedEffect(endpointUrl) { endpointUrl?.let(vm::validateStream) }
     Scaffold(topBar = { TopAppBar(title = { Text(stringResource(R.string.radios)) },
         navigationIcon = { IconButton(onClick = onBack) {
             Icon(Icons.AutoMirrored.Outlined.ArrowBack, contentDescription = stringResource(R.string.back))
@@ -75,7 +78,7 @@ fun RadioDetailRoute(id: String, onBack: () -> Unit, vm: CatalogViewModel = hilt
             row?.let {
                 Text(stringResource(R.string.live))
                 Text("${stringResource(R.string.sources_and_rights)}: ${it.station.sourceId}")
-                Text("${stringResource(R.string.stream_address)}: ${it.station.streams.firstOrNull()?.url.orEmpty()}")
+                Text("${stringResource(R.string.stream_status)}: ${validation?.health?.name ?: it.station.health.name}")
                 if (!it.capabilities.canRecord) Text(stringResource(R.string.recording_unavailable))
                 Text(stringResource(R.string.player_next_stage))
             }

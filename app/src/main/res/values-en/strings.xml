@@ -34,6 +34,7 @@
     <string name="surahs">Available surahs</string>
     <string name="available_surahs">Available: %1$d surahs</string>
     <string name="stream_address">Stream address</string>
+    <string name="stream_status">Stream status</string>
     <string name="recording_unavailable">Recording is unavailable for this source.</string>
     <string name="player_next_stage">Playback will be enabled in the player milestone.</string>
 </resources>

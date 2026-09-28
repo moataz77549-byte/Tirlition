@@ -34,6 +34,7 @@
     <string name="surahs">السور المتاحة</string>
     <string name="available_surahs">المتاح: %1$d سورة</string>
     <string name="stream_address">رابط البث</string>
+    <string name="stream_status">حالة البث</string>
     <string name="recording_unavailable">التسجيل غير متاح لهذا المصدر.</string>
     <string name="player_next_stage">سيُفعّل التشغيل في مرحلة المشغل الصوتي.</string>
 </resources>
