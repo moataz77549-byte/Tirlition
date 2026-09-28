@@ -27,7 +27,9 @@ class Mp3QuranContractTest {
         assertEquals(2, catalog.mushafs.size)
         assertEquals(setOf(1, 18, 114), catalog.mushafs.first().availableSurahs)
         assertEquals(5, catalog.tracks.size)
-        assertEquals("https://server11.mp3quran.net/hazza/018.mp3", catalog.tracks.first { it.surahNumber == 18 }.audioUrl)
+        val track = catalog.tracks.first { it.surahNumber == 18 }
+        assertEquals("https://server11.mp3quran.net/hazza/018.mp3", track.audioUrl)
+        assertEquals("mp3quran:reciter:231", track.reciterId)
     }
 
     @Test
@@ -36,10 +38,10 @@ class Mp3QuranContractTest {
     }
 
     @Test
-    fun radios_preserve_mp3quran_and_qurango_provenance() {
-        val mapped = Mp3QuranMapper.mapRadios(
-            Mp3QuranRadiosResponse(listOf(Mp3QuranRadioDto(10, "إذاعة", "https://Qurango.net/radio/example"))),
-        ).single()
+    fun radios_json_preserves_mp3quran_and_qurango_provenance() {
+        val fixture = """{"radios":[{"id":10,"name":"إذاعة","url":"https://Qurango.net/radio/example","future_field":"ignored"}]}"""
+        val response = json.decodeFromString<Mp3QuranRadiosResponse>(fixture)
+        val mapped = Mp3QuranMapper.mapRadios(response).single()
         assertEquals(SourceIds.MP3_QURAN_V3, mapped.sourceId)
         assertEquals(SourceIds.QURANGO_STREAMS, mapped.streams.single().sourceId)
         assertEquals(SourceIds.MP3_QURAN_V3, mapped.streams.single().returnedBySourceId)
@@ -47,12 +49,34 @@ class Mp3QuranContractTest {
     }
 
     @Test
-    fun live_tv_is_hls_and_stream_only() {
-        val mapped = Mp3QuranMapper.mapLiveTv(
-            Mp3QuranLiveTvResponse(listOf(Mp3QuranLiveTvDto(3, "قناة القرآن", "https://win.holol.com/live/quran/playlist.m3u8"))),
-        ).single()
+    fun live_tv_json_is_hls_and_stream_only() {
+        val fixture = """{"livetv":[{"id":3,"name":"قناة القرآن","url":"https://win.holol.com/live/quran/playlist.m3u8"},{"id":4,"name":"قناة السنة","url":"https://win.holol.com/live/sunnah/playlist.m3u8"}]}"""
+        val response = json.decodeFromString<Mp3QuranLiveTvResponse>(fixture)
+        val mapped = Mp3QuranMapper.mapLiveTv(response).first()
         assertEquals("hls", mapped.streams.single().format)
         assertEquals(AssetRightsStatus.STREAM_ONLY, mapped.streams.single().assetRightsStatus)
         assertTrue(mapped.tags.contains("audio-from-live-channel"))
+        assertEquals(2, Mp3QuranMapper.mapLiveTv(response).size)
+    }
+
+    @Test
+    fun invalid_stream_urls_are_rejected_without_crashing_catalog() {
+        val response = Mp3QuranRadiosResponse(
+            listOf(
+                Mp3QuranRadioDto(1, "تالف", "not-a-url"),
+                Mp3QuranRadioDto(2, "آمن", "https://qurango.net/radio/good"),
+            ),
+        )
+        val mapped = Mp3QuranMapper.mapRadios(response)
+        assertEquals(1, mapped.size)
+        assertEquals("mp3quran:radio:2", mapped.single().id)
+    }
+
+    @Test
+    fun http_stream_is_retained_but_blocked_until_narrow_cleartext_policy_exists() {
+        val mapped = Mp3QuranMapper.mapRadios(
+            Mp3QuranRadiosResponse(listOf(Mp3QuranRadioDto(7, "قديم", "http://qurango.net/radio/legacy"))),
+        ).single()
+        assertEquals(com.rateel.app.domain.model.StreamHealth.BLOCKED, mapped.streams.single().health)
     }
 }

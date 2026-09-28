@@ -13,6 +13,11 @@ class Mp3QuranAudioUrlResolverTest {
     }
 
     @Test(expected = IllegalArgumentException::class)
+    fun rejects_non_absolute_media_server() {
+        Mp3QuranAudioUrlResolver.resolve("server/path", 1)
+    }
+
+    @Test(expected = IllegalArgumentException::class)
     fun rejects_out_of_quran_range() {
         Mp3QuranAudioUrlResolver.resolve("https://server.example/", 115)
     }
