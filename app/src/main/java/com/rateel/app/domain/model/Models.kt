@@ -1,6 +1,8 @@
 package com.rateel.app.domain.model
 
-enum class StreamHealth { ONLINE, OFFLINE, UNKNOWN, DEGRADED }
+enum class StreamHealth { UNKNOWN, ONLINE, OFFLINE, DEGRADED, UNSUPPORTED, BLOCKED }
+enum class SourceHealth { HEALTHY, DEGRADED, OFFLINE, RATE_LIMITED, AUTH_ERROR, UNKNOWN }
+enum class CategoryOrigin { SOURCE, DERIVED, UNKNOWN }
 
 data class StreamEndpoint(
     val sourceId: String,
@@ -9,6 +11,14 @@ data class StreamEndpoint(
     val bitrateKbps: Int? = null,
     val primary: Boolean = false,
     val providerEndpointId: String? = null,
+    val returnedBySourceId: String? = null,
+    val originalUrl: String = url,
+    val resolvedUrl: String? = null,
+    val assetHost: String? = null,
+    val resolvedHost: String? = null,
+    val lastResolvedAt: Long? = null,
+    val health: StreamHealth = StreamHealth.UNKNOWN,
+    val assetRightsStatus: AssetRightsStatus = AssetRightsStatus.INHERIT_SOURCE,
 )
 
 data class RadioStation(
@@ -23,11 +33,13 @@ data class RadioStation(
     val country: String? = null,
     val language: String = "ar",
     val category: String? = null,
+    val categoryOrigin: CategoryOrigin = CategoryOrigin.UNKNOWN,
     val website: String? = null,
     val isActive: Boolean = true,
     val isFeatured: Boolean = false,
     val isVerified: Boolean = false,
     val health: StreamHealth = StreamHealth.UNKNOWN,
+    val sourceHealth: SourceHealth = SourceHealth.UNKNOWN,
     val tags: List<String> = emptyList(),
     val createdAt: Long? = null,
     val updatedAt: Long? = null,
@@ -76,5 +88,28 @@ data class SurahAudio(
     val quality: String? = null,
     val checksum: String? = null,
     val downloadable: Boolean = true,
+    val assetRightsStatus: AssetRightsStatus = AssetRightsStatus.INHERIT_SOURCE,
+    val metadata: Map<String, String> = emptyMap(),
+)
+
+data class QuranLanguage(val id: String, val code: String, val name: String, val nativeName: String)
+data class QuranSurah(val number: Int, val name: String, val startPage: Int?, val endPage: Int?, val isMakki: Boolean?)
+data class Riwaya(val id: Int, val name: String)
+
+enum class PlaybackItemType { RADIO_STREAM, SURAH_AUDIO, LOCAL_RECORDING, DOWNLOADED_SURAH }
+
+data class PlaybackItem(
+    val id: String,
+    val type: PlaybackItemType,
+    val title: String,
+    val subtitle: String? = null,
+    val artwork: String? = null,
+    val sourceId: String,
+    val streamUri: String? = null,
+    val localUri: String? = null,
+    val mimeType: String? = null,
+    val isLive: Boolean = false,
+    val durationMs: Long? = null,
+    val capabilities: ContentCapabilities,
     val metadata: Map<String, String> = emptyMap(),
 )

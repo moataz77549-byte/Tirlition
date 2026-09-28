@@ -1,25 +1,23 @@
 package com.rateel.app.domain.source
 
-import com.rateel.app.domain.model.ContentSource
-import com.rateel.app.domain.model.LicenseType
-import com.rateel.app.domain.model.SourceIds
-import com.rateel.app.domain.model.SourceType
+import com.rateel.app.domain.model.*
 
 private const val VERIFIED_2026_09_28 = 1_790_553_600_000L
 
-object PlannedSourceCatalog {
-    val mp3QuranV3 = ContentSource(
+object SourceRegistry {
+    val mp3Quran = ContentSource(
         id = SourceIds.MP3_QURAN_V3,
         name = "MP3Quran API v3",
         provider = "MP3Quran.net",
         type = SourceType.API,
         website = "https://www.mp3quran.net/",
         apiBaseUrl = "https://www.mp3quran.net/api/v3/",
-        documentationUrl = "https://www.mp3quran.net/ar/api/2",
+        documentationUrl = "https://www.mp3quran.net/eng/api",
         termsUrl = "https://www.mp3quran.net/privacy-en.html",
-        copyrightUrl = "https://www.mp3quran.net/eng/contact-us",
+        copyrightUrl = "https://www.mp3quran.net/privacy-en.html",
         attributionText = "MP3Quran.net",
         licenseType = LicenseType.PROVIDER_TERMS,
+        rightsStatus = SourceRightsStatus.VERIFIED_ALLOWED,
         allowStreaming = true,
         allowDownload = true,
         allowOfflinePlayback = true,
@@ -32,19 +30,23 @@ object PlannedSourceCatalog {
         isVerified = true,
         lastRightsCheckAt = VERIFIED_2026_09_28,
         lastTechnicalCheckAt = VERIFIED_2026_09_28,
-        notes = "Official MP3Quran pages permit copying site material and using site URLs. Recording, downloaded-file redistribution and commercial-use permissions remain disabled until explicitly verified.",
+        priority = 10,
+        fallbackPriority = 10,
+        health = SourceHealth.UNKNOWN,
+        notes = "Official policy permits visitors/developers to copy site material or use site links. Recording and unrestricted redistribution remain disabled in Rateel.",
     )
 
-    val qurangoStreams = ContentSource(
+    val qurango = ContentSource(
         id = SourceIds.QURANGO_STREAMS,
         name = "Qurango Streams",
         provider = "MP3Quran.net / Qurango.net",
         type = SourceType.CONTENT_PROVIDER,
         website = "https://qurango.net/",
         termsUrl = "https://www.mp3quran.net/privacy-en.html",
-        copyrightUrl = "https://www.mp3quran.net/eng/contact-us",
+        copyrightUrl = "https://www.mp3quran.net/privacy-en.html",
         attributionText = "Qurango.net",
         licenseType = LicenseType.PROVIDER_TERMS,
+        rightsStatus = SourceRightsStatus.STREAM_ONLY,
         allowStreaming = true,
         allowRecording = false,
         allowDownload = false,
@@ -57,7 +59,36 @@ object PlannedSourceCatalog {
         isVerified = true,
         lastRightsCheckAt = VERIFIED_2026_09_28,
         lastTechnicalCheckAt = VERIFIED_2026_09_28,
-        notes = "MP3Quran's published policy states that it also applies to Qurango.net. Public reachability is not treated as recording permission.",
+        priority = 20,
+        fallbackPriority = 20,
+        notes = "MP3Quran states that its published policy applies to Qurango.net; live-stream recording/download stays disabled.",
+    )
+
+    val mp3QuranLiveTv = ContentSource(
+        id = SourceIds.MP3_QURAN_LIVE_TV,
+        name = "MP3Quran Live TV",
+        provider = "MP3Quran.net",
+        type = SourceType.OFFICIAL_BROADCASTER,
+        website = "https://www.mp3quran.net/",
+        apiBaseUrl = "https://www.mp3quran.net/api/v3/live-tv",
+        documentationUrl = "https://www.mp3quran.net/eng/api",
+        termsUrl = "https://www.mp3quran.net/privacy-en.html",
+        attributionText = "MP3Quran.net",
+        licenseType = LicenseType.PROVIDER_TERMS,
+        rightsStatus = SourceRightsStatus.STREAM_ONLY,
+        allowStreaming = true,
+        allowDownload = false,
+        allowOfflinePlayback = false,
+        allowRecording = false,
+        allowSharing = false,
+        allowCommercialUse = false,
+        isOfficial = true,
+        isVerified = true,
+        lastRightsCheckAt = VERIFIED_2026_09_28,
+        lastTechnicalCheckAt = VERIFIED_2026_09_28,
+        priority = 15,
+        fallbackPriority = 15,
+        notes = "Audio-first access to live-tv metadata. Returned asset hosts keep their own asset-rights status; recording/download are disabled.",
     )
 
     val quranFoundation = ContentSource(
@@ -67,11 +98,12 @@ object PlannedSourceCatalog {
         type = SourceType.API,
         website = "https://quran.foundation/",
         apiBaseUrl = "https://apis.quran.foundation/",
-        documentationUrl = "https://api-docs.quran.com/",
-        termsUrl = "https://api-docs.quran.com/legal/developer-terms/",
-        copyrightUrl = "https://api-docs.quran.com/legal/developer-terms/",
-        attributionText = "Quran Foundation",
+        documentationUrl = "https://api-docs.quran.foundation/",
+        termsUrl = "https://api-docs.quran.foundation/legal/developer-terms/",
+        copyrightUrl = "https://api-docs.quran.foundation/legal/developer-terms/",
+        attributionText = "Quran data provided by Quran Foundation.",
         licenseType = LicenseType.PROVIDER_TERMS,
+        rightsStatus = SourceRightsStatus.REQUIRES_BACKEND,
         requiresAttribution = true,
         allowStreaming = true,
         allowDownload = false,
@@ -88,7 +120,6 @@ object PlannedSourceCatalog {
         lastRightsCheckAt = VERIFIED_2026_09_28,
         lastTechnicalCheckAt = VERIFIED_2026_09_28,
         isEnabled = false,
-        disabledReason = "backend_proxy_and_content_scope_required",
         streamingEnabled = false,
         downloadEnabled = false,
         offlinePlaybackEnabled = false,
@@ -96,8 +127,20 @@ object PlannedSourceCatalog {
         offlineSyncEnabled = false,
         recordingEnabled = false,
         sharingEnabled = false,
-        notes = "Content APIs require server-held credentials. Generic storage is limited to one week unless an explicit exception or documented Content Sync resource applies.",
+        priority = 50,
+        fallbackPriority = 50,
+        disabledReason = "backend_proxy_and_content_scope_required",
+        notes = "Confidential Content API credentials stay on a Rateel backend. Generic cached QF Content is limited to one week unless an explicit exception or Content Sync applies.",
     )
 
-    val all = listOf(mp3QuranV3, qurangoStreams, quranFoundation)
+    val all: List<ContentSource> = listOf(mp3Quran, qurango, mp3QuranLiveTv, quranFoundation)
+    fun byId(id: String): ContentSource? = all.firstOrNull { it.id == id }
+}
+
+/** Backward-compatible name retained for milestone-1 callers. */
+object PlannedSourceCatalog {
+    val mp3QuranV3 get() = SourceRegistry.mp3Quran
+    val qurangoStreams get() = SourceRegistry.qurango
+    val quranFoundation get() = SourceRegistry.quranFoundation
+    val all get() = SourceRegistry.all
 }

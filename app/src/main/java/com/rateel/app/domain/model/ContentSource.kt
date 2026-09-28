@@ -1,7 +1,6 @@
 package com.rateel.app.domain.model
 
 enum class SourceType { API, RADIO_DIRECTORY, OFFICIAL_BROADCASTER, CONTENT_PROVIDER, OTHER }
-
 enum class LicenseType { UNKNOWN, PROVIDER_TERMS, WRITTEN_PERMISSION, OPEN_LICENSE, PUBLIC_DOMAIN, CUSTOM }
 
 data class ContentSource(
@@ -16,6 +15,7 @@ data class ContentSource(
     val copyrightUrl: String? = null,
     val attributionText: String? = null,
     val licenseType: LicenseType = LicenseType.UNKNOWN,
+    val rightsStatus: SourceRightsStatus = SourceRightsStatus.PENDING_VERIFICATION,
     val requiresAttribution: Boolean = false,
     val allowStreaming: Boolean = false,
     val allowDownload: Boolean = false,
@@ -40,23 +40,21 @@ data class ContentSource(
     val offlineSyncEnabled: Boolean = true,
     val recordingEnabled: Boolean = true,
     val sharingEnabled: Boolean = true,
+    val priority: Int = 100,
+    val fallbackPriority: Int = 100,
+    val health: SourceHealth = SourceHealth.UNKNOWN,
     val disabledReason: String? = null,
 )
 
 enum class RightsAction { STREAM, DOWNLOAD, OFFLINE_PLAYBACK, CACHE, OFFLINE_SYNC, RECORD, SHARE, COMMERCIAL_USE }
 
-data class RightsDecision(
-    val allowed: Boolean,
-    val attributionRequired: Boolean,
-    val maxOfflineRetentionDays: Int? = null,
-    val reason: String? = null,
-)
+data class RightsDecision(val allowed: Boolean, val attributionRequired: Boolean, val maxOfflineRetentionDays: Int? = null, val reason: String? = null)
 
 object SourceRightsPolicy {
     fun evaluate(source: ContentSource, action: RightsAction): RightsDecision {
-        if (!source.isEnabled) return denied(source, source.disabledReason ?: "source_disabled")
-        if (!source.isVerified) return denied(source, "source_not_verified")
-
+        if (!source.isEnabled || source.rightsStatus == SourceRightsStatus.DISABLED) return denied(source, source.disabledReason ?: "source_disabled")
+        if (!source.isVerified || source.rightsStatus == SourceRightsStatus.PENDING_VERIFICATION) return denied(source, "source_not_verified")
+        if (source.rightsStatus == SourceRightsStatus.RESTRICTED) return denied(source, "source_restricted")
         val remotelyEnabled = when (action) {
             RightsAction.STREAM -> source.streamingEnabled
             RightsAction.DOWNLOAD -> source.downloadEnabled
@@ -68,7 +66,6 @@ object SourceRightsPolicy {
             RightsAction.COMMERCIAL_USE -> true
         }
         if (!remotelyEnabled) return denied(source, "action_disabled_remotely")
-
         val rightsAllowed = when (action) {
             RightsAction.STREAM -> source.allowStreaming
             RightsAction.DOWNLOAD -> source.allowDownload
@@ -79,12 +76,8 @@ object SourceRightsPolicy {
             RightsAction.SHARE -> source.allowSharing
             RightsAction.COMMERCIAL_USE -> source.allowCommercialUse
         }
-
-        return if (rightsAllowed) {
-            RightsDecision(true, source.requiresAttribution, source.maxOfflineRetentionDays)
-        } else {
-            denied(source, "action_not_permitted")
-        }
+        return if (rightsAllowed) RightsDecision(true, source.requiresAttribution, source.maxOfflineRetentionDays)
+        else denied(source, "action_not_permitted")
     }
 
     private fun denied(source: ContentSource, reason: String) =
@@ -94,5 +87,6 @@ object SourceRightsPolicy {
 object SourceIds {
     const val MP3_QURAN_V3 = "mp3quran-v3"
     const val QURANGO_STREAMS = "qurango-streams"
+    const val MP3_QURAN_LIVE_TV = "mp3quran-live-tv"
     const val QURAN_FOUNDATION = "quran-foundation"
 }
