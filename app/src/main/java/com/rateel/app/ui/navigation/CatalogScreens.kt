@@ -80,7 +80,7 @@ fun RadioDetailRoute(id: String, onBack: () -> Unit, vm: CatalogViewModel = hilt
                 Text("${stringResource(R.string.sources_and_rights)}: ${it.station.sourceId}")
                 Text("${stringResource(R.string.stream_status)}: ${validation?.health?.name ?: it.station.health.name}")
                 if (!it.capabilities.canRecord) Text(stringResource(R.string.recording_unavailable))
-                Text(stringResource(R.string.player_next_stage))
+                Button(onClick = { vm.playRadio(id) }) { Text(stringResource(R.string.play)) }
             }
         }
     }
@@ -101,7 +101,7 @@ fun SurahDetailRoute(id: String, onBack: () -> Unit, vm: CatalogViewModel = hilt
             Text(track?.surahNameArabic.orEmpty(), style = MaterialTheme.typography.headlineMedium)
             track?.let {
                 Text("${stringResource(R.string.sources_and_rights)}: ${it.sourceId}")
-                Text(stringResource(R.string.player_next_stage))
+                Button(onClick = { vm.playSurah(id) }) { Text(stringResource(R.string.play)) }
             }
         }
     }

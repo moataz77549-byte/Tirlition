@@ -7,6 +7,7 @@ import com.rateel.app.data.provider.StreamValidation
 import com.rateel.app.data.provider.StreamValidator
 import com.rateel.app.domain.model.*
 import com.rateel.app.domain.repository.*
+import com.rateel.app.playback.PlaybackController
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.flow.*
@@ -22,6 +23,7 @@ class CatalogViewModel @Inject constructor(
     private val audio: AudioRepository,
     private val sources: SourceRepository,
     private val validator: StreamValidator,
+    private val playback: PlaybackController,
 ) : ViewModel() {
     val radioRows = combine(radios.observeRadios(), sources.observeSources()) { stations, rights ->
         val byId = rights.associateBy { it.id }
@@ -67,5 +69,26 @@ class CatalogViewModel @Inject constructor(
 
     fun validateStream(url: String) = viewModelScope.launch {
         streamValidation.value = validator.check(url)
+    }
+
+    fun playRadio(id: String) {
+        val row = radioRows.value.firstOrNull { it.station.id == id } ?: return
+        val endpoint = row.station.streams.firstOrNull() ?: return
+        if (!row.capabilities.canStream) return
+        playback.play(row.station.toPlaybackItem(endpoint, row.capabilities))
+    }
+
+    fun playSurah(id: String) = viewModelScope.launch {
+        val mushafId = id.substringBeforeLast(':', "")
+        val tracks = audio.observeTracks(mushafId).first().sortedBy { it.surahNumber }
+        val start = tracks.indexOfFirst { it.id == id }
+        if (start < 0) return@launch
+        val source = sources.getSource(tracks[start].sourceId) ?: return@launch
+        val host = runCatching { java.net.URI(tracks[start].audioUrl).host?.lowercase() }.getOrNull()
+        val capabilities = ContentCapabilityResolver.resolve(
+            source, ContentAsset(source.id, host, source.id),
+        )
+        if (!capabilities.canStream) return@launch
+        playback.playQueue(tracks.map { it.toPlaybackItem(null, null, capabilities) }, start)
     }
 }

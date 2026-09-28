@@ -37,4 +37,8 @@
     <string name="stream_status">حالة البث</string>
     <string name="recording_unavailable">التسجيل غير متاح لهذا المصدر.</string>
     <string name="player_next_stage">سيُفعّل التشغيل في مرحلة المشغل الصوتي.</string>
+    <string name="play">تشغيل</string>
+    <string name="pause">إيقاف مؤقت</string>
+    <string name="stop">إيقاف التشغيل</string>
+    <string name="player">المشغل</string>
 </resources>

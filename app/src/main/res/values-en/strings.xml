@@ -37,4 +37,8 @@
     <string name="stream_status">Stream status</string>
     <string name="recording_unavailable">Recording is unavailable for this source.</string>
     <string name="player_next_stage">Playback will be enabled in the player milestone.</string>
+    <string name="play">Play</string>
+    <string name="pause">Pause</string>
+    <string name="stop">Stop</string>
+    <string name="player">Player</string>
 </resources>

@@ -29,6 +29,8 @@ import com.rateel.app.domain.repository.MushafRepository
 import com.rateel.app.domain.repository.RadioRepository
 import com.rateel.app.domain.repository.ReciterRepository
 import com.rateel.app.domain.repository.SourceRepository
+import com.rateel.app.playback.PlaybackController
+import com.rateel.app.playback.Media3PlaybackController
 import dagger.Binds
 import dagger.Module
 import dagger.Provides
@@ -114,4 +116,5 @@ abstract class BindingsModule {
     @Binds abstract fun bindReciterRepository(impl: OfflineReciterRepository): ReciterRepository
     @Binds abstract fun bindMushafRepository(impl: LocalMushafRepository): MushafRepository
     @Binds abstract fun bindAudioRepository(impl: LocalAudioRepository): AudioRepository
+    @Binds abstract fun bindPlaybackController(impl: Media3PlaybackController): PlaybackController
 }
