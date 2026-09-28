@@ -105,7 +105,7 @@ interface SourceSyncDao {
         FavoriteEntity::class, ListeningHistoryEntity::class, DownloadEntity::class,
         PlaybackProgressEntity::class, CacheMetadataEntity::class, LocalRecordingEntity::class,
     ],
-    version = 2,
+    version = 3,
     exportSchema = true,
 )
 abstract class RateelDatabase : RoomDatabase() {

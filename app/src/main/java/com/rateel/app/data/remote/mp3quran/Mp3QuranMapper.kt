@@ -46,17 +46,20 @@ object Mp3QuranMapper {
         }
         val tracks = response.reciters.flatMap { reciter ->
             reciter.moshaf.flatMap { mushaf ->
-                parseSurahList(mushaf.surahList).map { number ->
+                parseSurahList(mushaf.surahList).mapNotNull { number ->
+                    val audioUrl = runCatching { Mp3QuranAudioUrlResolver.resolve(mushaf.server, number) }.getOrNull()
+                        ?: return@mapNotNull null
                     SurahAudio(
                         id = "mp3quran:track:${mushaf.id}:$number",
                         sourceId = SourceIds.MP3_QURAN_V3,
                         mushafId = "mp3quran:mushaf:${mushaf.id}",
                         surahNumber = number,
                         surahNameArabic = names[number] ?: number.toString(),
-                        audioUrl = Mp3QuranAudioUrlResolver.resolve(mushaf.server, number),
+                        audioUrl = audioUrl,
                         format = "mp3",
                         downloadable = true,
                         assetRightsStatus = AssetRightsStatus.VERIFIED_ALLOWED,
+                        reciterId = "mp3quran:reciter:${reciter.id}",
                         metadata = mapOf("remoteMushafId" to mushaf.id.toString(), "remoteReciterId" to reciter.id.toString()),
                     )
                 }
@@ -66,7 +69,8 @@ object Mp3QuranMapper {
     }
 
     fun mapRadios(response: Mp3QuranRadiosResponse): List<RadioStation> =
-        response.radios.map { dto ->
+        response.radios.mapNotNull { dto ->
+            val uri = validHttpUri(dto.url) ?: return@mapNotNull null
             val endpointSource = StreamSourceResolver.sourceIdFor(dto.url, SourceIds.MP3_QURAN_V3)
             RadioStation(
                 id = "mp3quran:radio:${dto.id}",
@@ -79,9 +83,10 @@ object Mp3QuranMapper {
                         returnedBySourceId = SourceIds.MP3_QURAN_V3,
                         url = dto.url,
                         originalUrl = dto.url,
-                        assetHost = hostOf(dto.url),
+                        assetHost = uri.host.lowercase(),
                         format = inferFormat(dto.url),
                         primary = true,
+                        health = if (uri.scheme.equals("http", true)) StreamHealth.BLOCKED else StreamHealth.UNKNOWN,
                         providerEndpointId = dto.id.toString(),
                         assetRightsStatus = if (endpointSource == SourceIds.QURANGO_STREAMS) AssetRightsStatus.STREAM_ONLY else AssetRightsStatus.PENDING_VERIFICATION,
                     ),
@@ -92,7 +97,8 @@ object Mp3QuranMapper {
         }
 
     fun mapLiveTv(response: Mp3QuranLiveTvResponse): List<RadioStation> =
-        response.liveTv.map { dto ->
+        response.liveTv.mapNotNull { dto ->
+            val uri = validHttpUri(dto.url) ?: return@mapNotNull null
             RadioStation(
                 id = "mp3quran:live-tv:${dto.id}",
                 sourceId = SourceIds.MP3_QURAN_LIVE_TV,
@@ -104,9 +110,10 @@ object Mp3QuranMapper {
                         returnedBySourceId = SourceIds.MP3_QURAN_V3,
                         url = dto.url,
                         originalUrl = dto.url,
-                        assetHost = hostOf(dto.url),
+                        assetHost = uri.host.lowercase(),
                         format = inferFormat(dto.url),
                         primary = true,
+                        health = if (uri.scheme.equals("http", true)) StreamHealth.BLOCKED else StreamHealth.UNKNOWN,
                         providerEndpointId = dto.id.toString(),
                         assetRightsStatus = AssetRightsStatus.STREAM_ONLY,
                     ),
@@ -123,5 +130,8 @@ object Mp3QuranMapper {
         else -> "mp3"
     }
 
-    private fun hostOf(url: String): String? = runCatching { URI(url).host?.lowercase() }.getOrNull()
+    private fun validHttpUri(url: String): URI? =
+        runCatching { URI(url) }.getOrNull()?.takeIf {
+            it.host != null && (it.scheme.equals("https", true) || it.scheme.equals("http", true))
+        }
 }

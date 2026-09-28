@@ -76,11 +76,16 @@ class RadioViewModel @Inject constructor(
                 stationSource?.name,
                 endpointSource?.name?.takeIf { it != stationSource?.name },
             ).distinct()
-            val capabilities = ContentCapabilityResolver.resolve(
+            val rightsCapabilities = ContentCapabilityResolver.resolve(
                 effectiveSource,
                 if (station.tags.contains("live-tv")) ContentType.LIVE_CHANNEL_AUDIO else ContentType.RADIO_STREAM,
                 endpoint?.assetRightsStatus ?: AssetRightsStatus.INHERIT_SOURCE,
             )
+            val capabilities = if (endpoint?.health == StreamHealth.BLOCKED || endpoint?.health == StreamHealth.UNSUPPORTED) {
+                rightsCapabilities.copy(canStream = false, canRecord = false)
+            } else {
+                rightsCapabilities
+            }
             RadioItemUiModel(
                 id = station.id,
                 name = station.nameArabic,

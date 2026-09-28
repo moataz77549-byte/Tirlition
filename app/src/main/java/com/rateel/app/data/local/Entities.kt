@@ -162,6 +162,7 @@ data class AudioTrackEntity(
     val checksum: String?,
     val downloadable: Boolean,
     @ColumnInfo(defaultValue = "'INHERIT_SOURCE'") val assetRightsStatus: String,
+    val reciterId: String? = null,
 )
 
 @Entity(tableName = "quran_languages")

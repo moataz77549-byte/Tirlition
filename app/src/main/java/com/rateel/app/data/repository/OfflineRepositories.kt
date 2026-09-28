@@ -113,7 +113,7 @@ class OfflineReciterRepository @Inject constructor(
                     SourceIds.MP3_QURAN_V3,
                     c.reciters.map { ReciterEntity(it.id, it.sourceId, it.nameArabic, it.nameEnglish, it.photoUrl, it.country, it.biography, it.featured) },
                     c.mushafs.map { MushafEntity(it.id, it.sourceId, it.reciterId, it.name, it.riwaya, it.description, it.source, it.quality, it.format, it.totalSurahs, it.artworkUrl) },
-                    c.tracks.map { AudioTrackEntity(it.id, it.sourceId, it.mushafId, it.surahNumber, it.surahNameArabic, it.surahNameEnglish, it.audioUrl, it.durationMs, it.fileSizeBytes, it.format, it.bitrateKbps, it.quality, it.checksum, it.downloadable, it.assetRightsStatus.name) },
+                    c.tracks.map { AudioTrackEntity(it.id, it.sourceId, it.mushafId, it.surahNumber, it.surahNameArabic, it.surahNameEnglish, it.audioUrl, it.durationMs, it.fileSizeBytes, it.format, it.bitrateKbps, it.quality, it.checksum, it.downloadable, it.assetRightsStatus.name, it.reciterId) },
                     c.languages.map { QuranLanguageEntity(it.id, it.code, it.name, it.nativeName) },
                     c.surahs.map { QuranSurahEntity(it.number, it.name, it.startPage, it.endPage, it.isMakki) },
                     c.riwayat.map { RiwayaEntity(it.id, it.name) },
@@ -165,6 +165,7 @@ class LocalAudioRepository @Inject constructor(private val dao: AudioTrackDao) :
                     bitrateKbps = it.bitrateKbps, quality = it.quality, checksum = it.checksum,
                     downloadable = it.downloadable,
                     assetRightsStatus = runCatching { AssetRightsStatus.valueOf(it.assetRightsStatus) }.getOrDefault(AssetRightsStatus.INHERIT_SOURCE),
+                    reciterId = it.reciterId,
                 )
             }
         }

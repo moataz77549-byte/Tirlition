@@ -89,6 +89,7 @@ data class SurahAudio(
     val checksum: String? = null,
     val downloadable: Boolean = true,
     val assetRightsStatus: AssetRightsStatus = AssetRightsStatus.INHERIT_SOURCE,
+    val reciterId: String? = null,
     val metadata: Map<String, String> = emptyMap(),
 )
 
@@ -112,4 +113,14 @@ data class PlaybackItem(
     val durationMs: Long? = null,
     val capabilities: ContentCapabilities,
     val metadata: Map<String, String> = emptyMap(),
+)
+
+
+@JvmInline
+value class CanonicalReciterId(val value: String)
+
+data class SourceReciterMapping(
+    val canonicalReciterId: CanonicalReciterId,
+    val sourceId: String,
+    val sourceReciterId: String,
 )
