@@ -9,10 +9,7 @@ import com.rateel.app.domain.repository.RadioRepository
 import com.rateel.app.domain.repository.ReciterRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 
 @HiltViewModel
@@ -24,50 +21,28 @@ class HomeViewModel @Inject constructor(
     private val refreshing = MutableStateFlow(false)
     private val messageRes = MutableStateFlow<Int?>(null)
 
-    val uiState = combine(
-        radios.observeRadios(),
-        reciters.observeReciters(),
-        network.isOnline,
-        refreshing,
-        messageRes,
-    ) { radioItems, reciterItems, online, loading, message ->
-        HomeUiState(
-            loading = loading,
-            featuredRadios = radioItems.filter { it.isFeatured || radioItems.size <= 6 }.take(6),
-            featuredReciters = reciterItems.filter { it.featured || reciterItems.size <= 6 }.take(6),
-            offline = !online,
-            messageRes = message,
-        )
-    }.stateIn(
-        scope = viewModelScope,
-        started = SharingStarted.WhileSubscribed(5_000),
-        initialValue = HomeUiState(loading = true),
-    )
+    val uiState = combine(radios.observeRadios(), reciters.observeReciters(), network.isOnline, refreshing, messageRes) { radioItems, reciterItems, online, loading, message ->
+        val featuredRadios = radioItems.filter { it.isFeatured }.ifEmpty { radioItems }.take(6)
+        val featuredReciters = reciterItems.filter { it.featured }.ifEmpty { reciterItems }.take(6)
+        HomeUiState(loading, featuredRadios, featuredReciters, !online, message)
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), HomeUiState(loading = true))
 
-    init {
-        refresh()
-    }
+    init { refresh(staleOnly = true) }
 
     fun onAction(action: HomeAction) {
         when (action) {
-            HomeAction.Retry -> refresh()
+            HomeAction.Retry -> refresh(staleOnly = false)
             is HomeAction.OpenRadio -> Unit
         }
     }
 
-    private fun refresh() {
+    private fun refresh(staleOnly: Boolean) {
         viewModelScope.launch {
             refreshing.value = true
             messageRes.value = null
-            val radioResult = runCatching { radios.refresh() }
-                .getOrElse { AppResult.Error.Unknown(it) }
-            val reciterResult = runCatching { reciters.refresh() }
-                .getOrElse { AppResult.Error.Unknown(it) }
-
-            messageRes.value = listOf(radioResult, reciterResult)
-                .filterIsInstance<AppResult.Error>()
-                .firstOrNull()
-                ?.toMessageRes()
+            val radioResult = runCatching { if (staleOnly) radios.refreshIfStale() else radios.refresh() }.getOrElse { AppResult.Error.Unknown(it) }
+            val reciterResult = runCatching { if (staleOnly) reciters.refreshIfStale() else reciters.refresh() }.getOrElse { AppResult.Error.Unknown(it) }
+            messageRes.value = listOf(radioResult, reciterResult).filterIsInstance<AppResult.Error>().firstOrNull()?.toMessageRes()
             refreshing.value = false
         }
     }

@@ -1,31 +1,10 @@
 <resources>
-    <string name="app_name">رتيل</string>
-    <string name="home">الرئيسية</string>
-    <string name="radios">الإذاعات</string>
-    <string name="reciters">القراء</string>
-    <string name="downloads">التنزيلات</string>
-    <string name="library">مكتبتي</string>
-    <string name="settings">الإعدادات</string>
-    <string name="coming_soon">سيُستكمل هذا القسم في المراحل القادمة.</string>
-    <string name="home_headline">استمع بقلب حاضر</string>
-    <string name="home_empty">لا يوجد محتوى محفوظ بعد. ستظهر بيانات المصادر هنا بعد ربطها في المرحلة المخصصة.</string>
-    <string name="featured_radios">إذاعات مميزة</string>
-    <string name="featured_reciters">قراء مميزون</string>
-    <string name="offline_cached_content">أنت دون اتصال. سيستمر رتيل بعرض المحتوى المخزن محليًا.</string>
-    <string name="retry">إعادة المحاولة</string>
-    <string name="theme">المظهر</string>
-    <string name="theme_system">حسب النظام</string>
-    <string name="theme_light">فاتح</string>
-    <string name="theme_dark">داكن</string>
-    <string name="sources_and_rights">المصادر والحقوق</string>
-    <string name="sources_and_rights_summary">اعرض الجهات التي يأتي منها المحتوى وسياسات الاستخدام المرتبطة بها.</string>
-    <string name="sources_and_rights_empty">لا توجد مصادر إنتاج مفعلة بعد. لن يعرض رتيل مصدرًا قبل تسجيل حقوقه والتحقق منها.</string>
-    <string name="rights_verified">تم التحقق من سجل الحقوق</string>
-    <string name="rights_unverified">حقوق الاستخدام لم تُعتمد بعد</string>
-    <string name="back">رجوع</string>
-    <string name="error_network">تعذر الاتصال بالشبكة. تحقق من الإنترنت وحاول مجددًا.</string>
-    <string name="error_server">تعذر الوصول إلى الخادم حاليًا.</string>
-    <string name="error_timeout">استغرق الاتصال وقتًا أطول من المتوقع.</string>
-    <string name="error_parsing">تعذر قراءة البيانات القادمة من المصدر.</string>
-    <string name="error_unknown">حدث خطأ غير متوقع. حاول مجددًا.</string>
+    <string name="app_name">رتيل</string><string name="home">الرئيسية</string><string name="radios">الإذاعات</string><string name="reciters">القراء</string><string name="downloads">التنزيلات</string><string name="library">مكتبتي</string><string name="settings">الإعدادات</string>
+    <string name="coming_soon">سيُستكمل هذا القسم في المراحل القادمة.</string><string name="home_headline">استمع بقلب حاضر</string><string name="home_empty">لا يوجد محتوى محفوظ بعد. حاول التحديث عند توفر الإنترنت.</string><string name="featured_radios">إذاعات مميزة</string><string name="featured_reciters">قراء مميزون</string>
+    <string name="offline_cached_content">أنت دون اتصال. سيستمر رتيل بعرض المحتوى المخزن محليًا.</string><string name="offline_metadata">غير متصل بالإنترنت — يتم عرض آخر بيانات محفوظة.</string><string name="retry">إعادة المحاولة</string>
+    <string name="theme">المظهر</string><string name="theme_system">حسب النظام</string><string name="theme_light">فاتح</string><string name="theme_dark">داكن</string>
+    <string name="sources_and_rights">المصادر والحقوق</string><string name="sources_and_rights_summary">اعرض الجهات التي يأتي منها المحتوى وسياسات الاستخدام المرتبطة بها.</string><string name="sources_and_rights_empty">لا توجد مصادر إنتاج مسجلة.</string><string name="rights_verified">تم التحقق من سجل الحقوق</string><string name="rights_unverified">حقوق الاستخدام لم تُعتمد بعد</string><string name="back">رجوع</string>
+    <string name="error_network">تعذر تحديث المحتوى، يتم عرض آخر نسخة محفوظة.</string><string name="error_server">تعذر الوصول إلى المصدر حاليًا، يتم عرض آخر نسخة محفوظة.</string><string name="error_timeout">استغرق التحديث وقتًا أطول من المتوقع، يتم عرض آخر نسخة محفوظة.</string><string name="error_parsing">تغيرت بيانات المصدر ولم يمكن قراءتها بالكامل.</string><string name="error_unknown">حدث خطأ غير متوقع أثناء التحديث.</string>
+    <string name="search_radios">ابحث في الإذاعات</string><string name="search_reciters">ابحث عن قارئ</string><string name="live_badge">مباشر</string><string name="no_radios">لا توجد إذاعات مطابقة.</string><string name="no_reciters">لا يوجد قراء مطابقون.</string>
+    <string name="audio_mushafs">المصاحف الصوتية</string><string name="complete_mushaf">المصحف كامل — 114 سورة</string><string name="available_surahs_count">المتاح: %1$d سورة</string><string name="no_mushafs">لا توجد مصاحف صوتية محفوظة لهذا القارئ.</string><string name="surahs">السور</string><string name="no_surahs">لا توجد سور متاحة في هذا المصحف.</string><string name="streaming_only_source">%1$s — الاستماع حسب سياسة المصدر</string><string name="mp3quran_source">MP3Quran.net</string><string name="player">المشغل</string>
 </resources>
