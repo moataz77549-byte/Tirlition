@@ -34,6 +34,12 @@ data class RadioUiState(
     @StringRes val messageRes: Int? = null,
 )
 
+private data class RadioContent(
+    val radios: List<RadioStation>,
+    val sources: List<ContentSource>,
+    val query: String,
+)
+
 @HiltViewModel
 class RadioViewModel @Inject constructor(
     private val repository: RadioRepository,
@@ -44,22 +50,31 @@ class RadioViewModel @Inject constructor(
     private val loading = MutableStateFlow(false)
     private val messageRes = MutableStateFlow<Int?>(null)
 
-    val uiState: StateFlow<RadioUiState> = combine(
+    private val content = combine(
         repository.observeRadios(),
         sources.observeSources(),
         query,
+    ) { radios, sourceItems, search ->
+        RadioContent(radios, sourceItems, search)
+    }
+
+    val uiState: StateFlow<RadioUiState> = combine(
+        content,
         network.isOnline,
         loading,
         messageRes,
-    ) { radios, sourceItems, search, online, busy, message ->
-        val sourceMap = sourceItems.associateBy { it.id }
-        val normalized = search.trim()
-        val items = radios.mapNotNull { station ->
+    ) { data, online, busy, message ->
+        val sourceMap = data.sources.associateBy { it.id }
+        val normalized = data.query.trim()
+        val items = data.radios.mapNotNull { station ->
             val endpoint = station.streams.firstOrNull { it.primary } ?: station.streams.firstOrNull()
-            val effectiveSource = endpoint?.sourceId?.let(sourceMap::get) ?: sourceMap[station.sourceId] ?: return@mapNotNull null
+            val effectiveSource = endpoint?.sourceId?.let { sourceMap[it] } ?: sourceMap[station.sourceId] ?: return@mapNotNull null
             val stationSource = sourceMap[station.sourceId]
-            val endpointSource = endpoint?.sourceId?.let(sourceMap::get)
-            val labels = listOfNotNull(stationSource?.name, endpointSource?.name?.takeIf { it != stationSource?.name }).distinct()
+            val endpointSource = endpoint?.sourceId?.let { sourceMap[it] }
+            val labels = listOfNotNull(
+                stationSource?.name,
+                endpointSource?.name?.takeIf { it != stationSource?.name },
+            ).distinct()
             val capabilities = ContentCapabilityResolver.resolve(
                 effectiveSource,
                 if (station.tags.contains("live-tv")) ContentType.LIVE_CHANNEL_AUDIO else ContentType.RADIO_STREAM,
@@ -76,18 +91,17 @@ class RadioViewModel @Inject constructor(
                 capabilities = capabilities,
                 attribution = effectiveSource.attributionText?.takeIf { capabilities.requiresAttribution },
             )
-        }.filter {
+        }.filter { item ->
             normalized.isBlank() ||
-                it.name.contains(normalized, ignoreCase = true) ||
-                it.sourceLabel.contains(normalized, ignoreCase = true) ||
-                it.category.orEmpty().contains(normalized, ignoreCase = true) ||
-                radios.firstOrNull { radio -> radio.id == it.id }?.tags?.any { tag -> tag.contains(normalized, true) } == true
+                item.name.contains(normalized, ignoreCase = true) ||
+                item.sourceLabel.contains(normalized, ignoreCase = true) ||
+                item.category.orEmpty().contains(normalized, ignoreCase = true) ||
+                data.radios.firstOrNull { it.id == item.id }?.tags?.any { it.contains(normalized, true) } == true
         }
         RadioUiState(normalized, items, busy, !online, message)
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), RadioUiState(loading = true))
 
     init { refresh(staleOnly = true) }
-
     fun setQuery(value: String) { query.value = value }
     fun retry() = refresh(staleOnly = false)
 
