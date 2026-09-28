@@ -61,8 +61,13 @@ fun RadioRoute(
                             }
                         },
                         leadingContent = { Icon(Icons.Outlined.Radio, contentDescription = null) },
-                        trailingContent = { Text(stringResource(R.string.live_badge), style = MaterialTheme.typography.labelMedium) },
-                        modifier = Modifier.clickable(enabled = item.capabilities.canStream) { onPlayer(item.id) },
+                        trailingContent = {
+                            Text(
+                                stringResource(if (state.offline) R.string.offline_badge else R.string.live_badge),
+                                style = MaterialTheme.typography.labelMedium,
+                            )
+                        },
+                        modifier = Modifier.clickable(enabled = item.capabilities.canStream && !state.offline) { onPlayer(item.id) },
                     )
                     HorizontalDivider()
                 }

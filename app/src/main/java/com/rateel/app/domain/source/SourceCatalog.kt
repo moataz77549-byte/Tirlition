@@ -68,7 +68,7 @@ object SourceRegistry {
         id = SourceIds.MP3_QURAN_LIVE_TV,
         name = "MP3Quran Live TV",
         provider = "MP3Quran.net",
-        type = SourceType.OFFICIAL_BROADCASTER,
+        type = SourceType.CONTENT_PROVIDER,
         website = "https://www.mp3quran.net/",
         apiBaseUrl = "https://www.mp3quran.net/api/v3/live-tv",
         documentationUrl = "https://www.mp3quran.net/eng/api",

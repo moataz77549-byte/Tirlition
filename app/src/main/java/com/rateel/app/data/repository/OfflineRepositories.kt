@@ -6,6 +6,7 @@ import com.rateel.app.data.remote.CatalogRemoteDataSource
 import com.rateel.app.data.remote.RadioRemoteDataSource
 import com.rateel.app.domain.model.*
 import com.rateel.app.domain.repository.*
+import com.rateel.app.domain.source.RadioCanonicalizer
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlinx.coroutines.flow.Flow
@@ -50,7 +51,7 @@ class OfflineRadioRepository @Inject constructor(
         val now = System.currentTimeMillis()
         return when (val result = remote.fetchRadios()) {
             is AppResult.Success -> {
-                result.data.groupBy { it.sourceId }.forEach { (sourceId, items) ->
+                RadioCanonicalizer.deduplicate(result.data).groupBy { it.sourceId }.forEach { (sourceId, items) ->
                     val stations = items.map {
                         RadioEntity(
                             it.id, it.sourceId, it.canonicalKey, it.nameArabic, it.nameEnglish, it.description,
