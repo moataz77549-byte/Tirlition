@@ -40,6 +40,8 @@ class UnifiedPlaybackService : MediaSessionService() {
     private var previousId: String? = null
     private var previousLive = false
     private var previousPosition = 0L
+    private var lastListeningSample = 0L
+    private var wasPlaying = false
     private val failover = StreamFailoverManager()
     private var retryJob: Job? = null
 
@@ -53,6 +55,11 @@ class UnifiedPlaybackService : MediaSessionService() {
         player = exo
         exo.addListener(object : Player.Listener {
             override fun onEvents(player: Player, events: Player.Events) {
+                val now = android.os.SystemClock.elapsedRealtime()
+                if (wasPlaying && previousId != null) addListeningTime(previousId!!,
+                    (now - lastListeningSample).coerceIn(0, 30_000))
+                lastListeningSample = now
+                wasPlaying = player.isPlaying
                 val item = player.currentMediaItem
                 val id = item?.mediaId
                 if (previousId != null && id != previousId && !previousLive)
@@ -68,6 +75,7 @@ class UnifiedPlaybackService : MediaSessionService() {
                     scope.launch { settings.setLastPlaybackItemId(id) }
                     previousLive = item.mediaMetadata.extras?.getBoolean("rateel.isLive") == true
                     previousPosition = 0
+                    lastListeningSample = now
                     scope.launch(Dispatchers.IO) {
                         val prior = historyDao.latest("audio", id)
                         historyDao.upsert(ListeningHistoryEntity(id = prior?.id ?: 0,
@@ -115,6 +123,11 @@ class UnifiedPlaybackService : MediaSessionService() {
         scope.launch {
             while (true) {
                 delay(10_000)
+                val now = android.os.SystemClock.elapsedRealtime()
+                if (exo.isPlaying && previousId != null) {
+                    addListeningTime(previousId!!, (now - lastListeningSample).coerceIn(0, 30_000))
+                    lastListeningSample = now
+                }
                 val id = exo.currentMediaItem?.mediaId
                 if (id != null && !previousLive && exo.currentPosition > 0) {
                     previousPosition = exo.currentPosition
@@ -130,6 +143,13 @@ class UnifiedPlaybackService : MediaSessionService() {
         scope.launch(Dispatchers.IO) {
             progressDao.upsert(PlaybackProgressEntity(id, position.coerceAtLeast(0),
                 duration, System.currentTimeMillis(), completed))
+        }
+    }
+
+    private fun addListeningTime(id: String, delta: Long) {
+        if (delta <= 0) return
+        scope.launch(Dispatchers.IO) {
+            historyDao.addPlayDuration(id, delta)
         }
     }
 

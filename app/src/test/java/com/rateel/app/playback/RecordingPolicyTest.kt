@@ -21,6 +21,8 @@ class RecordingPolicyTest {
     @Test fun hostAndFormatGate() {
         val permitted = source.copy(allowRecording = true)
         assertEquals(RecordingCapability.Supported, StreamRecordingPolicy.canRecord(permitted, stream))
+        assertEquals(RecordingCapability.Supported,
+            StreamRecordingPolicy.canRecord(permitted, stream.copy(format = null)))
         assertTrue(StreamRecordingPolicy.canRecord(permitted, stream.copy(url = "https://unknown.example/live"))
             is RecordingCapability.Unsupported)
         assertTrue(StreamRecordingPolicy.canRecord(permitted, stream.copy(format = "hls"))

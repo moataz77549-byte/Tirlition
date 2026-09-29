@@ -35,6 +35,8 @@
     <string name="available_surahs">المتاح: %1$d سورة</string>
     <string name="stream_address">رابط البث</string>
     <string name="stream_status">حالة البث</string>
+    <string name="stream_unavailable">البث غير متاح حاليًا.</string>
+    <string name="unsupported_audio">صيغة الصوت غير مدعومة.</string>
     <string name="recording_unavailable">التسجيل غير متاح لهذا المصدر.</string>
     <string name="player_next_stage">سيُفعّل التشغيل في مرحلة المشغل الصوتي.</string>
     <string name="play">تشغيل</string>

@@ -137,6 +137,8 @@ interface ListeningHistoryDao {
     @Query("SELECT * FROM listening_history ORDER BY playedAt DESC LIMIT 100")
     fun observeRecent(): Flow<List<ListeningHistoryEntity>>
     @Upsert suspend fun upsert(item: ListeningHistoryEntity)
+    @Query("UPDATE listening_history SET playedDurationMs = playedDurationMs + :delta WHERE id = (SELECT id FROM listening_history WHERE contentType = 'audio' AND contentId = :itemId ORDER BY playedAt DESC LIMIT 1)")
+    suspend fun addPlayDuration(itemId: String, delta: Long)
 }
 
 @Dao

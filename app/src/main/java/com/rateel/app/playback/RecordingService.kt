@@ -28,6 +28,7 @@ class RecordingService : Service() {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
     private var stationName = ""
     private var lastNotificationSecond = -1L
+    private var sessionStarted = false
     override fun onBind(intent: Intent?): IBinder? = null
 
     override fun onCreate() {
@@ -36,13 +37,14 @@ class RecordingService : Service() {
             NotificationChannel(CHANNEL, getString(R.string.recordings), NotificationManager.IMPORTANCE_LOW))
         scope.launch {
             recorder.state.collect { state ->
-                if ((state.status == RecordingStatus.RECORDING || state.status == RecordingStatus.FINALIZING)
+                if (sessionStarted && (state.status == RecordingStatus.RECORDING || state.status == RecordingStatus.FINALIZING)
                     && state.elapsedMs / 1000 != lastNotificationSecond) {
                     lastNotificationSecond = state.elapsedMs / 1000
                     (getSystemService(NOTIFICATION_SERVICE) as NotificationManager).notify(ID,
                         notification(state.elapsedMs / 1000))
                 }
-                if (state.status in setOf(RecordingStatus.COMPLETED, RecordingStatus.FAILED, RecordingStatus.CANCELLED))
+                if (sessionStarted && state.status in setOf(
+                        RecordingStatus.COMPLETED, RecordingStatus.FAILED, RecordingStatus.CANCELLED))
                     stopSelf()
             }
         }
@@ -51,6 +53,9 @@ class RecordingService : Service() {
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         when (intent?.action) {
             ACTION_START -> {
+                if (recorder.state.value.status in setOf(RecordingStatus.PREPARING,
+                        RecordingStatus.RECORDING, RecordingStatus.FINALIZING)) return START_NOT_STICKY
+                sessionStarted = true
                 stationName = intent.getStringExtra(EXTRA_NAME).orEmpty()
                 val id = intent.getStringExtra(EXTRA_STATION) ?: return START_NOT_STICKY
                 val source = intent.getStringExtra(EXTRA_SOURCE) ?: return START_NOT_STICKY

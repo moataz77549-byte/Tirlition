@@ -64,11 +64,13 @@ class ProgressiveStreamRecorder @Inject constructor(
         val directory = File(context.filesDir, "recordings").apply { mkdirs() }
         if (StatFs(directory.path).availableBytes < 25L * 1024 * 1024)
             return@withLock Result.failure(IOException("low_storage"))
-        val extension = if (request.endpoint.format == "mp3") "mp3" else "aac"
+        var extension = when (request.endpoint.format?.lowercase()) {
+            "mp3" -> "mp3"
+            "aac", "aac+" -> "aac"
+            else -> null
+        }
         val startedAt = System.currentTimeMillis()
-        val filename = RecordingFileNames.create(request.stationId, startedAt, extension)
-        val temp = File(directory, "$filename.part")
-        val final = File(directory, filename)
+        val temp = File(directory, "rateel_pending_${UUID.randomUUID()}.part")
         val id = UUID.randomUUID().toString()
         finish = false; discard = false
         mutable.value = RecordingState(RecordingStatus.PREPARING, request.stationId,
@@ -84,6 +86,13 @@ class ProgressiveStreamRecorder @Inject constructor(
                         val contentType = response.header("Content-Type").orEmpty().lowercase()
                         if (contentType.contains("html") || contentType.contains("mpegurl"))
                             throw IOException("unsupported_stream_response")
+                        extension = when {
+                            contentType.startsWith("audio/mpeg") || contentType.startsWith("audio/mp3") -> "mp3"
+                            contentType.startsWith("audio/aac") || contentType.startsWith("audio/x-aac") -> "aac"
+                            contentType.isBlank() || contentType.startsWith("application/octet-stream") -> extension
+                            else -> null
+                        }
+                        if (extension == null) throw IOException("unsupported_stream_response")
                         val input = response.body?.byteStream() ?: throw IOException("empty_stream")
                         val started = android.os.SystemClock.elapsedRealtime()
                         mutable.value = mutable.value.copy(status = RecordingStatus.RECORDING)
@@ -113,20 +122,22 @@ class ProgressiveStreamRecorder @Inject constructor(
                     return@launch
                 }
                 mutable.value = mutable.value.copy(status = RecordingStatus.FINALIZING)
+                val format = extension ?: throw IOException("unknown_stream_format")
                 if (temp.length() < 1024) throw IOException("recording_too_short")
-                if (!hasAudioHeader(temp, extension)) throw IOException("invalid_audio_header")
+                if (!hasAudioHeader(temp, format)) throw IOException("invalid_audio_header")
+                val final = File(directory, RecordingFileNames.create(request.stationId, startedAt, format))
                 if (!temp.renameTo(final)) throw IOException("file_finalize_failed")
                 try {
                     dao.insert(LocalRecordingEntity(id = id, stationId = request.stationId,
                         sourceId = source.id, stationName = request.stationName, title = request.stationName,
                         filePath = final.absolutePath,
-                        mimeType = if (extension == "mp3") "audio/mpeg" else "audio/aac",
+                        mimeType = if (format == "mp3") "audio/mpeg" else "audio/aac",
                         durationMs = mutable.value.elapsedMs, fileSizeBytes = final.length(),
                         startedAt = startedAt, finishedAt = System.currentTimeMillis(),
                         recordingMode = request.mode.name, requestedDurationMs = request.requestedDurationMs,
                         artwork = null, sourceAttribution = source.attributionText, createdAt = startedAt,
                         rightsSnapshot = "source=${source.id};record=${source.allowRecording};verified=${source.isVerified}",
-                        codec = extension))
+                        codec = format))
                 } catch (error: Exception) { final.delete(); throw error }
                 mutable.value = mutable.value.copy(status = RecordingStatus.COMPLETED, outputId = id)
             } catch (error: Exception) {

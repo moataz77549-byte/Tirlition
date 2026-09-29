@@ -166,6 +166,7 @@ class Media3PlaybackController @Inject constructor(
             durationMs = player.duration.takeIf { it != C.TIME_UNSET && it > 0 && item?.isLive != true },
             bufferedPositionMs = player.bufferedPosition.coerceAtLeast(0),
             playWhenReady = player.playWhenReady,
+            error = if (status == PlaybackStatus.ERROR) stateMutable.value.error else null,
             queue = items, currentIndex = if (item == null) -1 else index,
         )
     }

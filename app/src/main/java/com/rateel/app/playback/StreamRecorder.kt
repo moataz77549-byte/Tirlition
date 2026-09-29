@@ -44,7 +44,7 @@ object StreamRecordingPolicy {
         if (!rights.canRecord) return RecordingCapability.Unsupported("rights_denied")
         if (!endpoint.url.startsWith("https://")) return RecordingCapability.Unsupported("https_required")
         return when (endpoint.format?.lowercase()) {
-            "mp3", "aac", "aac+" -> RecordingCapability.Supported
+            "mp3", "aac", "aac+", null -> RecordingCapability.Supported
             else -> RecordingCapability.Unsupported("unsupported_stream_format")
         }
     }

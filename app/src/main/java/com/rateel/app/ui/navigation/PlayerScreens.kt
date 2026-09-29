@@ -108,7 +108,16 @@ fun FullPlayerRoute(onBack: () -> Unit, vm: PlayerViewModel = hiltViewModel()) {
                 }
                 Text("${stringResource(R.string.sources_and_rights)}: ${item.sourceId}")
                 TextButton(onClick = { timerDialog = true }) { Text(stringResource(R.string.sleep_timer)) }
-                state.error?.let { Text(it, color = MaterialTheme.colorScheme.error) }
+                state.error?.let { error ->
+                    val message = when {
+                        "NETWORK" in error -> R.string.error_network
+                        "HTTP" in error -> R.string.stream_unavailable
+                        "DECODING" in error || "PARSING" in error -> R.string.unsupported_audio
+                        else -> R.string.stream_unavailable
+                    }
+                    Text(stringResource(message), color = MaterialTheme.colorScheme.error)
+                    TextButton(onClick = vm::retry) { Text(stringResource(R.string.retry)) }
+                }
             }
         }
     }
