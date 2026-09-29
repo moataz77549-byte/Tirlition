@@ -79,6 +79,11 @@ class ProgressiveStreamRecorder @Inject constructor(
                 try {
                     networkCall.execute().use { response ->
                         if (!response.isSuccessful) throw IOException("stream_http_${response.code}")
+                        // Redirects can cross to another rights holder; check the final host too.
+                        if (StreamRecordingPolicy.canRecord(source,
+                                request.endpoint.copy(url = response.request.url.toString()))
+                            !is RecordingCapability.Supported)
+                            throw IOException("redirect_rights_denied")
                         extension = ProgressiveAudioFormat.resolve(
                             request.endpoint.format, response.header("Content-Type"))
                         if (extension == null) throw IOException("unsupported_stream_response")
