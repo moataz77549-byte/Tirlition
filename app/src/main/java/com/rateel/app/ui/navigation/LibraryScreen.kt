@@ -1,6 +1,8 @@
 package com.rateel.app.ui.navigation
 
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -22,11 +24,13 @@ import java.util.Date
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun LibraryRoute(onSurah: (String) -> Unit = {}, vm: LibraryViewModel = hiltViewModel()) {
+fun LibraryRoute(onSurah: (String) -> Unit = {}, onRadio: (String) -> Unit = {},
+    vm: LibraryViewModel = hiltViewModel()) {
     val recordings by vm.recordings.collectAsStateWithLifecycle()
     val history by vm.history.collectAsStateWithLifecycle()
     val favorites by vm.favorites.collectAsStateWithLifecycle()
     val downloads by vm.downloads.collectAsStateWithLifecycle()
+    val radios by vm.radios.collectAsStateWithLifecycle()
     var rename by remember { mutableStateOf<LocalRecordingEntity?>(null) }
     var title by remember { mutableStateOf("") }
     var deleting by remember { mutableStateOf<LocalRecordingEntity?>(null) }
@@ -42,37 +46,47 @@ fun LibraryRoute(onSurah: (String) -> Unit = {}, vm: LibraryViewModel = hiltView
             Text(stringResource(R.string.delete_recording)) } },
         dismissButton = { TextButton(onClick = { deleting = null }) { Text(stringResource(R.string.cancel)) } }) }
     Scaffold(topBar = { TopAppBar(title = { Text(stringResource(R.string.library)) }) }) { padding ->
-        LazyColumn(Modifier.fillMaxSize().padding(padding)) {
-            item { Text(stringResource(R.string.downloaded_content), Modifier.padding(16.dp), style = MaterialTheme.typography.titleLarge) }
+        LazyColumn(Modifier.fillMaxSize().padding(padding), contentPadding = rateelListPadding,
+            verticalArrangement = Arrangement.spacedBy(8.dp)) {
             val completed = downloads.filter { it.status == "COMPLETED" }
-            if (completed.isEmpty()) item { Text(stringResource(R.string.no_downloads), Modifier.padding(16.dp)) }
+            if (completed.isNotEmpty()) item { RateelSectionTitle(stringResource(R.string.downloaded_content)) }
             completed.groupBy { it.mushafId }.forEach { (mushaf, tracks) ->
-                item(key = "offline:${mushaf.orEmpty()}") {
-                    Text("${mushaf.orEmpty()} · ${stringResource(R.string.downloaded_count, tracks.size)}",
-                        Modifier.padding(16.dp))
-                }
+                if (mushaf != null) item(key = "offline:$mushaf") {
+                    RateelQuietCard(stringResource(R.string.audio_mushafs),
+                        stringResource(R.string.downloaded_count, tracks.size)) }
                 items(tracks, key = { "offline:${it.id}" }) { entry ->
-                    ListItem(headlineContent = { Text("${entry.surahNumber ?: ""} · ${entry.sourceId}") },
+                    ListItem(headlineContent = { Text(entry.surahNumber?.let {
+                        stringResource(R.string.download_track_title, it) } ?: stringResource(R.string.audio_mushafs)) },
                         supportingContent = { Text(readable(entry.fileSizeBytes)) },
                         modifier = Modifier.fillMaxWidth().clickable { onSurah(entry.contentId) })
                 }
             }
-            item { Text(stringResource(R.string.recordings), Modifier.padding(16.dp), style = MaterialTheme.typography.titleLarge) }
-            if (recordings.isEmpty()) item { Text(stringResource(R.string.no_recordings), Modifier.padding(16.dp)) }
-            items(recordings, key = { it.id }) { entry -> Column(Modifier.padding(8.dp)) {
+            if (recordings.isNotEmpty()) item { RateelSectionTitle(stringResource(R.string.recordings)) }
+            items(recordings, key = { it.id }) { entry -> Card { Column(Modifier.padding(8.dp)) {
                 ListItem(headlineContent = { Text(entry.title) }, supportingContent = {
-                    Text("‎${entry.stationName} · ${DateFormat.getDateInstance().format(Date(entry.startedAt))} · ${(entry.durationMs ?: 0) / 60_000} min · ${(entry.fileSizeBytes ?: 0) / 1024} KB") })
-                Button(onClick = { vm.play(entry.id) }) { Text(stringResource(R.string.play)) }
-                TextButton(onClick = { title = entry.title; rename = entry }) { Text(stringResource(R.string.rename)) }
-                TextButton(onClick = { deleting = entry }) { Text(stringResource(R.string.delete_recording)) }
-            } }
-            item { Text(stringResource(R.string.recent_listening), Modifier.padding(16.dp), style = MaterialTheme.typography.titleLarge) }
+                    Text("${entry.stationName} · ${DateFormat.getDateInstance().format(Date(entry.startedAt))} · ${readable(entry.fileSizeBytes)}") })
+                Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                    TextButton(onClick = { vm.play(entry.id) }) { Text(stringResource(R.string.play)) }
+                    TextButton(onClick = { title = entry.title; rename = entry }) { Text(stringResource(R.string.rename)) }
+                    TextButton(onClick = { deleting = entry }) { Text(stringResource(R.string.delete_recording)) }
+                }
+            } } }
+            if (history.isNotEmpty()) item { RateelSectionTitle(stringResource(R.string.recent_listening)) }
             items(history, key = { "history:${it.id}" }) { entry ->
                 ListItem(headlineContent = { Text(entry.titleSnapshot.ifBlank { entry.contentId }) },
-                    supportingContent = { Text(DateFormat.getDateTimeInstance().format(Date(entry.playedAt))) }) }
-            item { Text(stringResource(R.string.favorites), Modifier.padding(16.dp), style = MaterialTheme.typography.titleLarge) }
+                    supportingContent = { Text(DateFormat.getDateTimeInstance().format(Date(entry.playedAt))) },
+                    modifier = Modifier.clickable {
+                        if (entry.contentType == "radio") onRadio(entry.contentId)
+                        else if (entry.contentType == "surah") onSurah(entry.contentId)
+                    }) }
+            if (favorites.isNotEmpty()) item { RateelSectionTitle(stringResource(R.string.favorites)) }
             items(favorites, key = { "favorite:${it.id}" }) { entry ->
-                ListItem(headlineContent = { Text(entry.contentId) }, supportingContent = { Text(entry.contentType) }) }
+                ListItem(headlineContent = { Text(radios.firstOrNull { it.id == entry.contentId }?.nameArabic
+                    ?: entry.contentId) }, modifier = Modifier.clickable {
+                    if (entry.contentType == "radio") onRadio(entry.contentId)
+                }) }
+            if (completed.isEmpty() && recordings.isEmpty() && history.isEmpty() && favorites.isEmpty())
+                item { RateelQuietCard(stringResource(R.string.library_empty), stringResource(R.string.quick_listen)) }
         }
     }
 }

@@ -1,9 +1,9 @@
 name: Android CI
 on:
   push:
-    branches: [ main, feature/rateel-foundation ]
+    branches: [ main, feature/rateel-foundation, feature/rateel-stage0-ui ]
   pull_request:
-    branches: [ main ]
+    branches: [ main, feature/rateel-stage5 ]
 permissions:
   contents: read
 jobs:

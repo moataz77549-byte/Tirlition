@@ -12,6 +12,7 @@ import com.rateel.app.domain.model.ContentCapabilities
 import com.rateel.app.domain.model.PlaybackItem
 import com.rateel.app.domain.model.PlaybackType
 import com.rateel.app.domain.model.SourceRightsStatus
+import com.rateel.app.domain.repository.RadioRepository
 import com.rateel.app.playback.PlaybackController
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -27,6 +28,7 @@ class LibraryViewModel @Inject constructor(
     historyDao: ListeningHistoryDao,
     favoriteDao: FavoriteDao,
     downloadManager: RateelDownloadManager,
+    radioRepository: RadioRepository,
     private val player: PlaybackController,
     @ApplicationContext private val context: Context,
 ) : ViewModel() {
@@ -34,6 +36,7 @@ class LibraryViewModel @Inject constructor(
     val history = historyDao.observeRecent().stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
     val favorites = favoriteDao.observeAll().stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
     val downloads = downloadManager.downloads.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
+    val radios = radioRepository.observeRadios().stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
     private fun file(item: LocalRecordingEntity): File? {
         val directory = File(context.filesDir, "recordings").canonicalFile
         return runCatching { File(item.filePath).canonicalFile }.getOrNull()

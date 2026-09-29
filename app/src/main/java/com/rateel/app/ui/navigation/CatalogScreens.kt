@@ -18,6 +18,7 @@ import com.rateel.app.R
 import com.rateel.app.core.model.AppResult
 import com.rateel.app.domain.model.Mushaf
 import com.rateel.app.domain.model.SurahAudio
+import com.rateel.app.domain.model.StreamHealth
 import com.rateel.app.feature.catalog.CatalogViewModel
 import com.rateel.app.domain.source.ArabicSearch
 
@@ -28,6 +29,7 @@ fun RadiosRoute(onStation: (String) -> Unit, vm: CatalogViewModel = hiltViewMode
     val error by vm.error.collectAsStateWithLifecycle()
     val refreshing by vm.refreshing.collectAsStateWithLifecycle()
     var search by remember { mutableStateOf("") }
+    var category by remember { mutableStateOf<String?>(null) }
     LaunchedEffect(Unit) { vm.refreshCatalog() }
     Scaffold(topBar = {
         TopAppBar(title = { Text(stringResource(R.string.radios)) },
@@ -37,23 +39,37 @@ fun RadiosRoute(onStation: (String) -> Unit, vm: CatalogViewModel = hiltViewMode
     }) { padding ->
         Column(Modifier.padding(padding)) {
             if (refreshing) LinearProgressIndicator(Modifier.fillMaxWidth())
-            error?.let { Text(stringResource(it.messageRes()), Modifier.padding(12.dp)) }
-            OutlinedTextField(value = search, onValueChange = { search = it },
-                label = { Text(stringResource(R.string.search_radios)) },
-                modifier = Modifier.fillMaxWidth().padding(12.dp), singleLine = true)
-            LazyColumn(contentPadding = PaddingValues(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                val filtered = radios.filter {
-                    search.isBlank() || ArabicSearch.matches(it.station.nameArabic, search) ||
-                        it.station.sourceId.contains(search, ignoreCase = true) ||
-                        it.station.category.orEmpty().contains(search, ignoreCase = true)
+            error?.let { RateelQuietCard(stringResource(it.messageRes()),
+                stringResource(R.string.offline_cached_content), Modifier.padding(horizontal = 16.dp)) }
+            Box(Modifier.padding(horizontal = 16.dp, vertical = 8.dp)) {
+                RateelSearch(search, { search = it }, stringResource(R.string.search_radios))
+            }
+            val categories = radios.mapNotNull { it.station.category?.takeIf(String::isNotBlank) }.distinct().take(8)
+            if (categories.isNotEmpty()) {
+                androidx.compose.foundation.lazy.LazyRow(contentPadding = PaddingValues(horizontal = 16.dp),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    item { FilterChip(selected = category == null, onClick = { category = null },
+                        label = { Text(stringResource(R.string.all)) }) }
+                    items(categories) { name -> FilterChip(selected = category == name,
+                        onClick = { category = name }, label = { Text(name) }) }
                 }
-                if (filtered.isEmpty() && !refreshing) item { Text(stringResource(R.string.home_empty)) }
+            }
+            LazyColumn(contentPadding = rateelListPadding, verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                val filtered = radios.filter {
+                    (category == null || category == it.station.category) &&
+                        (search.isBlank() || ArabicSearch.matches(it.station.nameArabic, search) ||
+                            it.station.category.orEmpty().contains(search, ignoreCase = true))
+                }
+                if (filtered.isEmpty() && !refreshing) item {
+                    RateelQuietCard(stringResource(R.string.no_search_results), stringResource(R.string.retry)) }
                 items(filtered, key = { it.station.id }) { row ->
                     Card(Modifier.fillMaxWidth().clickable { onStation(row.station.id) }) {
                         ListItem(headlineContent = { Text(row.station.nameArabic) },
-                            supportingContent = {
-                                Text("${row.station.sourceId} · ${row.station.health.name}")
-                            }, trailingContent = { Text(stringResource(R.string.live)) })
+                            supportingContent = { row.station.category?.let { Text(it) } },
+                            trailingContent = { Text(stringResource(if (row.station.health == StreamHealth.OFFLINE ||
+                                row.station.health == StreamHealth.BLOCKED) R.string.radio_status_unavailable
+                                else R.string.radio_live_label), style = MaterialTheme.typography.labelMedium,
+                                color = MaterialTheme.colorScheme.primary) })
                     }
                 }
             }
@@ -92,9 +108,11 @@ fun RadioDetailRoute(id: String, onBack: () -> Unit, vm: CatalogViewModel = hilt
             Text(row?.station?.nameArabic.orEmpty(), style = MaterialTheme.typography.headlineMedium)
             row?.let {
                 Text(stringResource(R.string.live))
-                Text("${stringResource(R.string.sources_and_rights)}: ${it.station.sourceId}")
-                Text("${stringResource(R.string.stream_status)}: ${validation?.health?.name ?: it.station.health.name}")
-                if (!it.capabilities.canRecord) Text(stringResource(R.string.recording_unavailable))
+                if ((validation?.health ?: it.station.health) == StreamHealth.OFFLINE)
+                    Text(stringResource(R.string.radio_status_unavailable))
+                if (it.capabilities.requiresAttribution)
+                    Text(stringResource(R.string.source_info, sourceDisplayName(it.station.sourceId)),
+                        style = MaterialTheme.typography.labelSmall)
                 Button(onClick = { vm.playRadio(id) }) { Text(stringResource(R.string.play)) }
                 TextButton(onClick = { vm.toggleRadioFavorite(id) }) {
                     Text(stringResource(if (id in favoriteIds) R.string.remove_favorite else R.string.add_favorite))
@@ -133,14 +151,14 @@ fun SurahDetailRoute(id: String, onBack: () -> Unit, vm: CatalogViewModel = hilt
         Column(Modifier.padding(padding).padding(20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             Text(track?.surahNameArabic.orEmpty(), style = MaterialTheme.typography.headlineMedium)
             track?.let {
-                Text("${stringResource(R.string.sources_and_rights)}: ${it.sourceId}")
+                // An asset may require visible attribution even when the technical ID is hidden.
                 Button(onClick = { vm.playSurah(id) }) { Text(stringResource(R.string.play)) }
                 if (it.sourceId in eligible) {
                     val row = downloads.firstOrNull { entry -> entry.contentId == id }
                     if (row == null || row.status !in setOf("QUEUED", "DOWNLOADING", "VERIFYING", "COMPLETED"))
                         TextButton(onClick = { vm.downloadSurah(it) }) { Text(stringResource(R.string.download_surah)) }
                     else Text(row.status)
-                } else Text(stringResource(R.string.download_unavailable))
+                }
             }
         }
     }
@@ -155,16 +173,18 @@ fun RecitersRoute(onReciter: (String) -> Unit, vm: CatalogViewModel = hiltViewMo
     var search by remember { mutableStateOf("") }
     LaunchedEffect(Unit) { vm.refreshCatalog() }
     Scaffold(topBar = { TopAppBar(title = { Text(stringResource(R.string.reciters)) }) }) { padding ->
-        LazyColumn(Modifier.padding(padding), contentPadding = PaddingValues(12.dp)) {
-            item { OutlinedTextField(search, { search = it }, label = { Text(stringResource(R.string.search_reciters)) }, modifier = Modifier.fillMaxWidth(), singleLine = true) }
+        LazyColumn(Modifier.padding(padding), contentPadding = rateelListPadding,
+            verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            item { RateelSearch(search, { search = it }, stringResource(R.string.search_reciters)) }
             if (refreshing) item { LinearProgressIndicator(Modifier.fillMaxWidth()) }
             error?.let { item { Text(stringResource(it.messageRes())) } }
             val filtered = reciters.filter { ArabicSearch.matches(it.nameArabic, search) }
             if (filtered.isEmpty() && !refreshing) item { Text(stringResource(R.string.no_search_results)) }
             items(filtered, key = { it.id }) { reciter ->
-                ListItem(headlineContent = { Text(reciter.nameArabic) },
-                    supportingContent = { Text(reciter.sourceId) },
-                    modifier = Modifier.fillMaxWidth().clickable { onReciter(reciter.id) })
+                Card(Modifier.fillMaxWidth().clickable { onReciter(reciter.id) }) {
+                    ListItem(headlineContent = { Text(reciter.nameArabic) },
+                        supportingContent = { reciter.country?.let { Text(it) } })
+                }
             }
         }
     }
@@ -183,7 +203,7 @@ fun MushafsRoute(id: String, onBack: () -> Unit, onMushaf: (String) -> Unit,
         if (rows.isEmpty()) item { Text(stringResource(R.string.home_empty)) }
         items(rows, key = { it.id }) { mushaf: Mushaf ->
             ListItem(headlineContent = { Text(mushaf.name) },
-                supportingContent = { Text("${mushaf.riwaya} · ${stringResource(R.string.available_surahs, mushaf.availableSurahs.size)} · ${mushaf.sourceId}") },
+                supportingContent = { Text("${mushaf.riwaya} · ${stringResource(R.string.available_surahs, mushaf.availableSurahs.size)}") },
                 modifier = Modifier.fillMaxWidth().clickable { onMushaf(mushaf.id) })
         }
     }
@@ -219,7 +239,15 @@ fun SurahsRoute(id: String, onBack: () -> Unit, onSurah: (String) -> Unit,
         }
         items(rows, key = { it.id }) { track: SurahAudio ->
             ListItem(headlineContent = { Text("${track.surahNumber}. ${track.surahNameArabic}") },
-                supportingContent = { Text("${track.sourceId} · ${downloads.firstOrNull { it.contentId == track.id }?.status ?: ""}") },
+                supportingContent = { downloads.firstOrNull { it.contentId == track.id }?.let { row ->
+                    Text(stringResource(when (row.status) {
+                        "COMPLETED" -> R.string.download_complete
+                        "DOWNLOADING" -> R.string.download_active
+                        "PAUSED" -> R.string.download_paused
+                        "WAITING_FOR_NETWORK" -> R.string.download_waiting
+                        "FAILED" -> R.string.download_failed
+                        else -> R.string.download_queued
+                    })) } },
                 trailingContent = { if (track.sourceId in eligible)
                     Checkbox(checked = track.id in selected, onCheckedChange = { checked -> selected = if (checked) selected + track.id else selected - track.id }) },
                 modifier = Modifier.fillMaxWidth().clickable { onSurah(track.id) })
