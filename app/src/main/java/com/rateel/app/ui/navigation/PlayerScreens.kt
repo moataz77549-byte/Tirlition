@@ -67,6 +67,21 @@ fun FullPlayerRoute(onBack: () -> Unit, vm: PlayerViewModel = hiltViewModel()) {
     val item = state.currentItem
     var timerDialog by remember { mutableStateOf(false) }
     var recordingDialog by remember { mutableStateOf(false) }
+    var speedDialog by remember { mutableStateOf(false) }
+    if (speedDialog) AlertDialog(
+        onDismissRequest = { speedDialog = false },
+        title = { Text(stringResource(R.string.playback_speed)) },
+        text = {
+            Column {
+                listOf(0.75f, 1.0f, 1.25f, 1.5f, 1.75f, 2.0f).forEach { speed ->
+                    TextButton(onClick = { vm.setPlaybackSpeed(speed); speedDialog = false }) {
+                        Text("${speed}x")
+                    }
+                }
+            }
+        },
+        confirmButton = {},
+    )
     if (recordingDialog) AlertDialog(onDismissRequest = { recordingDialog = false },
         title = { Text(stringResource(R.string.save_clip)) },
         text = { Column {
@@ -142,6 +157,25 @@ fun FullPlayerRoute(onBack: () -> Unit, vm: PlayerViewModel = hiltViewModel()) {
                     }
                     IconButton(onClick = vm::stop) {
                         Icon(Icons.Outlined.Stop, contentDescription = stringResource(R.string.stop))
+                    }
+                }
+                if (!item.isLive) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
+                    ) {
+                        TextButton(onClick = { speedDialog = true }) {
+                            Text("${stringResource(R.string.playback_speed)}: ${state.playbackSpeed}x")
+                        }
+                        TextButton(onClick = vm::toggleRepeatMode) {
+                            val repeatLabel = when (state.repeatMode) {
+                                1 -> stringResource(R.string.repeat_one)
+                                2 -> stringResource(R.string.repeat_all)
+                                else -> stringResource(R.string.repeat_off)
+                            }
+                            Text("${stringResource(R.string.repeat_mode)}: $repeatLabel")
+                        }
                     }
                 }
                 Text("${stringResource(R.string.sources_and_rights)}: ${item.sourceId}")

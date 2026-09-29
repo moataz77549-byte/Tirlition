@@ -35,6 +35,11 @@ class PlayerViewModel @Inject constructor(
     fun previous() = controller.previous()
     fun seekTo(positionMs: Long) = controller.seekTo(positionMs)
     fun setSleepTimer(minutes: Int?) = controller.setSleepTimer(minutes)
+    fun setPlaybackSpeed(speed: Float) = controller.setPlaybackSpeed(speed)
+    fun toggleRepeatMode() {
+        val nextMode = (state.value.repeatMode + 1) % 3
+        controller.setRepeatMode(nextMode)
+    }
     fun retry() = viewModelScope.launch {
         val previous = state.value
         val item = previous.currentItem ?: return@launch

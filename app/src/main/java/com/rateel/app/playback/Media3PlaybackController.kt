@@ -35,7 +35,7 @@ class Media3PlaybackController @Inject constructor(
     private val stateMutable = MutableStateFlow(UnifiedPlaybackState())
     override val state: StateFlow<UnifiedPlaybackState> = stateMutable
     private var controller: MediaController? = null
-    private var pending: ((MediaController) -> Unit)? = null
+    private val pendingQueue = mutableListOf<(MediaController) -> Unit>()
     private var items = emptyList<PlaybackItem>()
     private var restored = false
     private val future = MediaController.Builder(
@@ -56,8 +56,8 @@ class Media3PlaybackController @Inject constructor(
                     }
                 })
                 update(connected)
-                pending?.invoke(connected)
-                pending = null
+                pendingQueue.forEach { it(connected) }
+                pendingQueue.clear()
                 if (connected.mediaItemCount == 0) scope.launch {
                     try {
                         val preferences = settings.preferences.first()
@@ -95,7 +95,7 @@ class Media3PlaybackController @Inject constructor(
 
     private fun withController(block: (MediaController) -> Unit) {
         val active = controller
-        if (active != null) block(active) else pending = block
+        if (active != null) block(active) else pendingQueue.add(block)
     }
 
     override fun play(item: PlaybackItem) = playQueue(listOf(item), 0)
@@ -130,7 +130,7 @@ class Media3PlaybackController @Inject constructor(
     override fun pause() { withController { it.pause() } }
     override fun resume() { withController { it.play() } }
     override fun stop() {
-        pending = null
+        pendingQueue.clear()
         withController { it.stop(); it.clearMediaItems() }
         items = emptyList()
         restored = false
@@ -149,10 +149,12 @@ class Media3PlaybackController @Inject constructor(
     override fun setSleepTimer(minutes: Int?) {
         require(minutes == null || minutes == -1 || minutes in 1..180)
         withController {
-            appContext.startService(Intent(appContext, UnifiedPlaybackService::class.java).apply {
-                action = UnifiedPlaybackService.ACTION_SLEEP_TIMER
-                putExtra(UnifiedPlaybackService.EXTRA_MINUTES, minutes ?: 0)
-            })
+            runCatching {
+                ContextCompat.startForegroundService(appContext, Intent(appContext, UnifiedPlaybackService::class.java).apply {
+                    action = UnifiedPlaybackService.ACTION_SLEEP_TIMER
+                    putExtra(UnifiedPlaybackService.EXTRA_MINUTES, minutes ?: 0)
+                })
+            }
         }
     }
 
@@ -177,6 +179,8 @@ class Media3PlaybackController @Inject constructor(
             playWhenReady = player.playWhenReady,
             error = if (status == PlaybackStatus.ERROR) stateMutable.value.error else null,
             queue = items, currentIndex = if (item == null) -1 else index,
+            playbackSpeed = player.playbackParameters.speed,
+            repeatMode = player.repeatMode,
         )
     }
 }

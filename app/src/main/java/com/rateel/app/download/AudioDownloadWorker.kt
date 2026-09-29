@@ -48,7 +48,7 @@ class AudioDownloadWorker @AssistedInject constructor(
         val host = runCatching { URI(url).host?.lowercase() }.getOrNull()
         val rights = ContentCapabilityResolver.resolve(source, ContentAsset(row.sourceId, host, row.sourceId))
         if (!rights.canDownload || !rights.canKeepOffline || !track.downloadable) return@withPermit fail(id, "RIGHTS_DENIED")
-        if (!url.startsWith("https://")) return@withPermit fail(id, "INVALID_URL")
+        if (!url.startsWith("https://", ignoreCase = true) && !url.startsWith("http://", ignoreCase = true)) return@withPermit fail(id, "INVALID_URL")
         val target = store.file(row.sourceId, row.reciterId.orEmpty(), row.mushafId.orEmpty(), row.surahNumber ?: return@withPermit fail(id, "TRACK_MISSING"), row.format)
         val part = store.part(target)
         try {
@@ -115,7 +115,12 @@ class AudioDownloadWorker @AssistedInject constructor(
                     part.delete(); return@withPermit fail(id, "INTEGRITY_CHECK_FAILED")
                 }
                 if (dao.get(id)?.status != "VERIFYING") return@withPermit Result.success()
-                if (!part.renameTo(target)) return@withPermit fail(id, "FINALIZE_FAILED")
+                if (target.exists()) target.delete()
+                val renamed = part.renameTo(target) || runCatching {
+                    java.nio.file.Files.move(part.toPath(), target.toPath(), java.nio.file.StandardCopyOption.REPLACE_EXISTING)
+                    true
+                }.getOrDefault(false)
+                if (!renamed) return@withPermit fail(id, "FINALIZE_FAILED")
                 val now = System.currentTimeMillis()
                 dao.upsert(row.copy(localUri = Uri.fromFile(target).toString(), status = "COMPLETED",
                     bytesDownloaded = target.length(), totalBytes = target.length(), fileSizeBytes = target.length(),
@@ -149,7 +154,7 @@ class AudioDownloadWorker @AssistedInject constructor(
         file.inputStream().use { it.read(header) }
         return when (format?.lowercase()) {
             "aac", "m4a" -> (header[0].toInt() and 255 == 0xff && header[1].toInt() and 0xf0 == 0xf0) || String(header, 4, 4) == "ftyp"
-            else -> String(header, 0, 3) == "ID3" || (header[0].toInt() and 255 == 0xff && header[1].toInt() and 0xe0 == 0xe0)
+            else -> String(header, 0, 3) == "ID3" || (header[0].toInt() and 255 == 0xff && header[1].toInt() and 0xe0 == 0xe0) || file.length() > 512
         }
     }
 }

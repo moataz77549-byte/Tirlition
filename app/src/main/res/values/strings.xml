@@ -104,4 +104,9 @@
 <string name="download_delete_mushaf">حذف المصحف من الجهاز</string>
 <string name="download_delete_confirm">سيُحذف %1$d ملفًا محملًا ويُحرر نحو %2$s من المساحة. هل تريد المتابعة؟</string>
 <string name="download_playback_busy">أوقف تشغيل السورة قبل حذف ملفها.</string>
+    <string name="playback_speed">السرعة</string>
+    <string name="repeat_mode">التكرار</string>
+    <string name="repeat_off">بدون تكرار</string>
+    <string name="repeat_one">تكرار السورة</string>
+    <string name="repeat_all">تكرار الكل</string>
 </resources>

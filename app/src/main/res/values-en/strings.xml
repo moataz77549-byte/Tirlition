@@ -104,4 +104,9 @@
 <string name="download_delete_mushaf">Delete downloaded mushaf</string>
 <string name="download_delete_confirm">Delete %1$d downloaded files and free about %2$s?</string>
 <string name="download_playback_busy">Stop playing this surah before deleting its file.</string>
+    <string name="playback_speed">Speed</string>
+    <string name="repeat_mode">Repeat</string>
+    <string name="repeat_off">Repeat off</string>
+    <string name="repeat_one">Repeat surah</string>
+    <string name="repeat_all">Repeat all</string>
 </resources>

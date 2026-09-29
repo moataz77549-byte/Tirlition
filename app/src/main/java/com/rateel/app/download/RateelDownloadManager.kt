@@ -40,7 +40,7 @@ class RateelDownloadManager @Inject constructor(
         val rights = ContentCapabilityResolver.resolve(source,
             ContentAsset(track.sourceId, uri.host?.lowercase(), track.sourceId))
         check(track.downloadable && rights.canDownload && rights.canKeepOffline) { "RIGHTS_DENIED" }
-        check(uri.scheme == "https") { "INVALID_URL" }
+        check(uri.scheme == "https" || uri.scheme == "http") { "INVALID_URL" }
         check(track.format?.lowercase() in listOf(null, "mp3", "aac", "m4a")) { "UNSUPPORTED_FORMAT" }
         check(storage.enough(track.fileSizeBytes)) { "NO_SPACE" }
         val existing = dao.byContent(track.id)
