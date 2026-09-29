@@ -4,6 +4,7 @@ import android.content.Intent
 import androidx.media3.common.AudioAttributes
 import androidx.media3.common.C
 import androidx.media3.common.Player
+import androidx.media3.common.MediaItem
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.session.MediaSession
 import androidx.media3.session.MediaSessionService
@@ -11,6 +12,7 @@ import com.rateel.app.data.local.ListeningHistoryDao
 import com.rateel.app.data.local.ListeningHistoryEntity
 import com.rateel.app.data.local.PlaybackProgressDao
 import com.rateel.app.data.local.PlaybackProgressEntity
+import com.rateel.app.domain.repository.RadioRepository
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
 import kotlinx.coroutines.CoroutineScope
@@ -20,12 +22,14 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.first
 
 /** MediaSessionService owns the sole ExoPlayer, including when the UI is gone. */
 @AndroidEntryPoint
 class UnifiedPlaybackService : MediaSessionService() {
     @Inject lateinit var progressDao: PlaybackProgressDao
     @Inject lateinit var historyDao: ListeningHistoryDao
+    @Inject lateinit var radios: RadioRepository
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
     private var session: MediaSession? = null
     private var player: ExoPlayer? = null
@@ -33,6 +37,8 @@ class UnifiedPlaybackService : MediaSessionService() {
     private var previousId: String? = null
     private var previousLive = false
     private var previousPosition = 0L
+    private val failover = StreamFailoverManager()
+    private var retryJob: Job? = null
 
     override fun onCreate() {
         super.onCreate()
@@ -49,6 +55,8 @@ class UnifiedPlaybackService : MediaSessionService() {
                 if (previousId != null && id != previousId && !previousLive)
                     persist(previousId!!, previousPosition, false)
                 if (id != null && id != previousId) {
+                    retryJob?.cancel()
+                    failover.reset()
                     previousId = id
                     previousLive = item.mediaMetadata.extras?.getBoolean("rateel.isLive") == true
                     previousPosition = 0
@@ -64,6 +72,27 @@ class UnifiedPlaybackService : MediaSessionService() {
                     previousPosition = player.currentPosition
                     if (!player.isPlaying || player.playbackState == Player.STATE_ENDED)
                         persist(id, previousPosition, player.playbackState == Player.STATE_ENDED)
+                }
+            }
+            override fun onPlayerError(error: androidx.media3.common.PlaybackException) {
+                val item = exo.currentMediaItem ?: return
+                if (item.mediaMetadata.extras?.getBoolean("rateel.isLive") != true) return
+                retryJob?.cancel()
+                retryJob = scope.launch {
+                    // Resolve by stable station ID so a changed stream URL is never persisted forever.
+                    runCatching { radios.refresh() }
+                    val endpoints = radios.observeRadios().first()
+                        .firstOrNull { it.id == item.mediaId }?.streams.orEmpty()
+                    val decision = failover.next(endpoints.size) ?: return@launch
+                    delay(decision.delayMs)
+                    if (exo.currentMediaItem?.mediaId != item.mediaId) return@launch
+                    val selected = endpoints[decision.endpointIndex]
+                    val replacement = item.buildUpon().setUri(selected.url)
+                        .setMimeType(if (selected.format == "hls" || selected.format == "m3u8")
+                            "application/x-mpegURL" else null).build()
+                    exo.replaceMediaItem(exo.currentMediaItemIndex, replacement)
+                    exo.prepare()
+                    exo.play()
                 }
             }
         })
@@ -105,6 +134,7 @@ class UnifiedPlaybackService : MediaSessionService() {
 
     override fun onDestroy() {
         timer?.cancel()
+        retryJob?.cancel()
         session?.release()
         player?.release()
         session = null

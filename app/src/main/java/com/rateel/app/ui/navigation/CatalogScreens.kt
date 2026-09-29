@@ -66,6 +66,19 @@ fun RadioDetailRoute(id: String, onBack: () -> Unit, vm: CatalogViewModel = hilt
     val radios by vm.radioRows.collectAsStateWithLifecycle()
     val validation by vm.streamValidation.collectAsStateWithLifecycle()
     val row = radios.firstOrNull { it.station.id == id }
+    val recording by vm.recordingState.collectAsStateWithLifecycle()
+    var recordingDialog by remember { mutableStateOf(false) }
+    if (recordingDialog) AlertDialog(onDismissRequest = { recordingDialog = false },
+        title = { Text(stringResource(R.string.save_clip)) },
+        text = { Column {
+            Text(stringResource(R.string.recording_description))
+            listOf(5, 10, 15, 30).forEach { minutes ->
+                TextButton(onClick = { vm.recordRadio(id, minutes); recordingDialog = false }) {
+                    Text(stringResource(R.string.minutes_option, minutes)) }
+            }
+            TextButton(onClick = { vm.recordRadio(id, null); recordingDialog = false }) {
+                Text(stringResource(R.string.free_recording)) }
+        } }, confirmButton = {})
     LaunchedEffect(id) { vm.refreshCatalog() }
     val endpointUrl = row?.station?.streams?.firstOrNull()?.url
     LaunchedEffect(endpointUrl) { endpointUrl?.let(vm::validateStream) }
@@ -81,6 +94,19 @@ fun RadioDetailRoute(id: String, onBack: () -> Unit, vm: CatalogViewModel = hilt
                 Text("${stringResource(R.string.stream_status)}: ${validation?.health?.name ?: it.station.health.name}")
                 if (!it.capabilities.canRecord) Text(stringResource(R.string.recording_unavailable))
                 Button(onClick = { vm.playRadio(id) }) { Text(stringResource(R.string.play)) }
+                if (it.capabilities.canRecord) {
+                    Button(onClick = { recordingDialog = true },
+                        enabled = recording.status !in setOf(com.rateel.app.playback.RecordingStatus.PREPARING,
+                            com.rateel.app.playback.RecordingStatus.RECORDING,
+                            com.rateel.app.playback.RecordingStatus.FINALIZING)) {
+                        Text(stringResource(R.string.save_clip))
+                    }
+                }
+                if (recording.status == com.rateel.app.playback.RecordingStatus.RECORDING) {
+                    Text(stringResource(R.string.recording_active) + " · " + (recording.elapsedMs / 1000) + "s")
+                    TextButton(onClick = { vm.stopRecording() }) { Text(stringResource(R.string.stop_recording)) }
+                    TextButton(onClick = { vm.stopRecording(cancel = true) }) { Text(stringResource(R.string.cancel_recording)) }
+                }
             }
         }
     }

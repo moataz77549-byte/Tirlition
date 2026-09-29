@@ -1,5 +1,8 @@
 package com.rateel.app.feature.catalog
 
+import android.content.Context
+import android.content.Intent
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.rateel.app.core.model.AppResult
@@ -8,6 +11,9 @@ import com.rateel.app.data.provider.StreamValidator
 import com.rateel.app.domain.model.*
 import com.rateel.app.domain.repository.*
 import com.rateel.app.playback.PlaybackController
+import com.rateel.app.playback.RecordingService
+import com.rateel.app.playback.StreamRecorder
+import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.flow.*
@@ -24,7 +30,10 @@ class CatalogViewModel @Inject constructor(
     private val sources: SourceRepository,
     private val validator: StreamValidator,
     private val playback: PlaybackController,
+    private val recorder: StreamRecorder,
+    @ApplicationContext private val context: Context,
 ) : ViewModel() {
+    val recordingState = recorder.state
     val radioRows = combine(radios.observeRadios(), sources.observeSources()) { stations, rights ->
         val byId = rights.associateBy { it.id }
         stations.mapNotNull { station ->
@@ -82,6 +91,27 @@ class CatalogViewModel @Inject constructor(
         }
         val index = queue.indexOfFirst { it.id == id }
         if (index >= 0) playback.playQueue(queue, index)
+    }
+
+    fun recordRadio(id: String, minutes: Int?) {
+        val row = radioRows.value.firstOrNull { it.station.id == id } ?: return
+        val endpoint = row.station.streams.firstOrNull() ?: return
+        if (!row.capabilities.canRecord || (minutes != null && minutes !in listOf(5, 10, 15, 30))) return
+        ContextCompat.startForegroundService(context, Intent(context, RecordingService::class.java).apply {
+            action = RecordingService.ACTION_START
+            putExtra(RecordingService.EXTRA_STATION, id)
+            putExtra(RecordingService.EXTRA_NAME, row.station.nameArabic)
+            putExtra(RecordingService.EXTRA_SOURCE, endpoint.sourceId)
+            putExtra(RecordingService.EXTRA_URL, endpoint.url)
+            putExtra(RecordingService.EXTRA_FORMAT, endpoint.format)
+            putExtra(RecordingService.EXTRA_MINUTES, minutes ?: 0)
+        })
+    }
+
+    fun stopRecording(cancel: Boolean = false) {
+        context.startService(Intent(context, RecordingService::class.java).apply {
+            action = if (cancel) RecordingService.ACTION_CANCEL else RecordingService.ACTION_STOP
+        })
     }
 
     fun playSurah(id: String) = viewModelScope.launch {

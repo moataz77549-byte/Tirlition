@@ -42,6 +42,15 @@ class ProgressiveStreamRecorder @Inject constructor(
     @Volatile private var discard = false
     private var job: Job? = null
 
+    init {
+        scope.launch {
+            val directory = File(context.filesDir, "recordings")
+            directory.listFiles()?.filter { it.name.endsWith(".part") &&
+                System.currentTimeMillis() - it.lastModified() > 24L * 60 * 60 * 1000 }
+                ?.forEach { it.delete() }
+        }
+    }
+
     override suspend fun start(request: RecordingRequest): Result<String> = mutex.withLock {
         if (job?.isActive == true) return@withLock Result.failure(IllegalStateException("recording_already_active"))
         // Read the current rights record. Never trust capabilities or source snapshots supplied by UI.
@@ -88,6 +97,8 @@ class ProgressiveStreamRecorder @Inject constructor(
                                 mutable.value = mutable.value.copy(elapsedMs = elapsed,
                                     bytesWritten = mutable.value.bytesWritten + count)
                                 if (request.requestedDurationMs != null && elapsed >= request.requestedDurationMs) break
+                                // Android dataSync foreground services have a finite time budget.
+                                if (request.mode == RecordingMode.MANUAL && elapsed >= 5L * 60 * 60 * 1000) break
                                 if (StatFs(directory.path).availableBytes < 5L * 1024 * 1024)
                                     throw IOException("low_storage")
                             }
@@ -103,6 +114,7 @@ class ProgressiveStreamRecorder @Inject constructor(
                 }
                 mutable.value = mutable.value.copy(status = RecordingStatus.FINALIZING)
                 if (temp.length() < 1024) throw IOException("recording_too_short")
+                if (!hasAudioHeader(temp, extension)) throw IOException("invalid_audio_header")
                 if (!temp.renameTo(final)) throw IOException("file_finalize_failed")
                 try {
                     dao.insert(LocalRecordingEntity(id = id, stationId = request.stationId,
@@ -135,5 +147,15 @@ class ProgressiveStreamRecorder @Inject constructor(
     override suspend fun cancel(): Result<Unit> {
         discard = true; call?.cancel(); job?.join()
         return Result.success(Unit)
+    }
+
+    private fun hasAudioHeader(file: File, extension: String): Boolean {
+        val header = ByteArray(3)
+        if (file.inputStream().use { it.read(header) } < 3) return false
+        val frameSync = (header[0].toInt() and 0xff) == 0xff &&
+            (header[1].toInt() and 0xe0) == 0xe0
+        return if (extension == "mp3") header.contentEquals("ID3".toByteArray()) || frameSync
+            else (header[0].toInt() and 0xff) == 0xff &&
+                (header[1].toInt() and 0xf0) == 0xf0
     }
 }

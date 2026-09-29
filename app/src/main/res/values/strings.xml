@@ -53,4 +53,10 @@
     <string name="delete_recording">حذف التسجيل</string>
     <string name="recent_listening">آخر الاستماع</string>
     <string name="favorites">المفضلة</string>
+    <string name="recording_active">جارٍ حفظ البث</string>
+    <string name="stop_recording">إيقاف وحفظ</string>
+    <string name="save_clip">حفظ مقطع</string>
+    <string name="free_recording">تسجيل حر</string>
+    <string name="recording_description">سيتم حفظ الصوت القادم من البث على جهازك.</string>
+    <string name="cancel_recording">إلغاء التسجيل</string>
 </resources>
