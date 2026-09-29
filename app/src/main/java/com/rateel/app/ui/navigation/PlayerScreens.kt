@@ -25,6 +25,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.rateel.app.R
 import com.rateel.app.feature.player.PlayerViewModel
 import com.rateel.app.playback.PlaybackStatus
+import com.rateel.app.playback.RecordingStatus
 import coil3.compose.AsyncImage
 
 @Composable
@@ -62,8 +63,23 @@ fun MiniPlayer(onOpen: () -> Unit, vm: PlayerViewModel) {
 @Composable
 fun FullPlayerRoute(onBack: () -> Unit, vm: PlayerViewModel = hiltViewModel()) {
     val state by vm.state.collectAsStateWithLifecycle()
+    val recording by vm.recordingState.collectAsStateWithLifecycle()
     val item = state.currentItem
     var timerDialog by remember { mutableStateOf(false) }
+    var recordingDialog by remember { mutableStateOf(false) }
+    if (recordingDialog) AlertDialog(onDismissRequest = { recordingDialog = false },
+        title = { Text(stringResource(R.string.save_clip)) },
+        text = { Column {
+            Text(stringResource(R.string.recording_description))
+            listOf(5, 10, 15, 30).forEach { minutes ->
+                TextButton(onClick = { vm.record(minutes); recordingDialog = false }) {
+                    Text(stringResource(R.string.minutes_option, minutes))
+                }
+            }
+            TextButton(onClick = { vm.record(null); recordingDialog = false }) {
+                Text(stringResource(R.string.free_recording))
+            }
+        } }, confirmButton = {})
     if (timerDialog) AlertDialog(
         onDismissRequest = { timerDialog = false },
         title = { Text(stringResource(R.string.sleep_timer)) },
@@ -129,6 +145,18 @@ fun FullPlayerRoute(onBack: () -> Unit, vm: PlayerViewModel = hiltViewModel()) {
                 }
                 Text("${stringResource(R.string.sources_and_rights)}: ${item.sourceId}")
                 TextButton(onClick = { timerDialog = true }) { Text(stringResource(R.string.sleep_timer)) }
+                if (item.isLive && item.capabilities.canRecord &&
+                    recording.status !in setOf(RecordingStatus.PREPARING,
+                        RecordingStatus.RECORDING, RecordingStatus.FINALIZING)) {
+                    Button(onClick = { recordingDialog = true }) { Text(stringResource(R.string.save_clip)) }
+                }
+                if (recording.status == RecordingStatus.RECORDING) {
+                    Text(stringResource(R.string.recording_active) + " · " + (recording.elapsedMs / 1000) + "s")
+                    TextButton(onClick = { vm.stopRecording() }) { Text(stringResource(R.string.stop_recording)) }
+                    TextButton(onClick = { vm.stopRecording(cancel = true) }) {
+                        Text(stringResource(R.string.cancel_recording))
+                    }
+                }
                 state.error?.let { error ->
                     val message = when {
                         "NETWORK" in error -> R.string.error_network
