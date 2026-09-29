@@ -126,7 +126,7 @@ fun RateelApp() {
                 )
             }
             composable(Destination.DOWNLOADS.route) { DownloadsRoute() }
-            composable(Destination.LIBRARY.route) { LibraryRoute() }
+            composable(Destination.LIBRARY.route) { LibraryRoute(onSurah = { navController.navigate("surah/${Uri.encode(it)}") }) }
             composable("settings") {
                 SettingsRoute(onSources = { navController.navigate("sources-rights") })
             }

@@ -19,6 +19,7 @@ import com.rateel.app.core.model.AppResult
 import com.rateel.app.domain.model.Mushaf
 import com.rateel.app.domain.model.SurahAudio
 import com.rateel.app.feature.catalog.CatalogViewModel
+import com.rateel.app.domain.source.ArabicSearch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -42,7 +43,7 @@ fun RadiosRoute(onStation: (String) -> Unit, vm: CatalogViewModel = hiltViewMode
                 modifier = Modifier.fillMaxWidth().padding(12.dp), singleLine = true)
             LazyColumn(contentPadding = PaddingValues(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 val filtered = radios.filter {
-                    search.isBlank() || it.station.nameArabic.contains(search, ignoreCase = true) ||
+                    search.isBlank() || ArabicSearch.matches(it.station.nameArabic, search) ||
                         it.station.sourceId.contains(search, ignoreCase = true) ||
                         it.station.category.orEmpty().contains(search, ignoreCase = true)
                 }
@@ -151,13 +152,16 @@ fun RecitersRoute(onReciter: (String) -> Unit, vm: CatalogViewModel = hiltViewMo
     val reciters by vm.reciterRows.collectAsStateWithLifecycle()
     val error by vm.error.collectAsStateWithLifecycle()
     val refreshing by vm.refreshing.collectAsStateWithLifecycle()
+    var search by remember { mutableStateOf("") }
     LaunchedEffect(Unit) { vm.refreshCatalog() }
     Scaffold(topBar = { TopAppBar(title = { Text(stringResource(R.string.reciters)) }) }) { padding ->
         LazyColumn(Modifier.padding(padding), contentPadding = PaddingValues(12.dp)) {
+            item { OutlinedTextField(search, { search = it }, label = { Text(stringResource(R.string.search_reciters)) }, modifier = Modifier.fillMaxWidth(), singleLine = true) }
             if (refreshing) item { LinearProgressIndicator(Modifier.fillMaxWidth()) }
             error?.let { item { Text(stringResource(it.messageRes())) } }
-            if (reciters.isEmpty() && !refreshing) item { Text(stringResource(R.string.home_empty)) }
-            items(reciters, key = { it.id }) { reciter ->
+            val filtered = reciters.filter { ArabicSearch.matches(it.nameArabic, search) }
+            if (filtered.isEmpty() && !refreshing) item { Text(stringResource(R.string.no_search_results)) }
+            items(filtered, key = { it.id }) { reciter ->
                 ListItem(headlineContent = { Text(reciter.nameArabic) },
                     supportingContent = { Text(reciter.sourceId) },
                     modifier = Modifier.fillMaxWidth().clickable { onReciter(reciter.id) })
