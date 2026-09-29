@@ -1,6 +1,6 @@
 # Stage 3 verification status
 
-This branch is a work-in-progress. Stage 2 is merged into `main`; stage 3 must not be described as accepted until physical/emulator playback and recording tests pass. No Release or production tag was created.
+Stage 3 was merged into `main` by PR #3 (`9b40676`). Its implementation is present, but the acceptance criteria still require physical/emulator playback and an authorized-source recording test. It must not be described as fully accepted before those tests pass. No Release or production tag was created.
 
 | Area | Current implementation | Remaining verification |
 | --- | --- | --- |

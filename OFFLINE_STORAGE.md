@@ -1,0 +1,3 @@
+# Offline storage
+
+Audio downloads reside under the application's private `filesDir/offline/quran/<source>/<reciter>/<mushaf>/<surah>.<ext>`. IDs are sanitized and filenames use the surah number. Partial files have `.part`; completed files are not in cache. Recordings remain in their separate stage-3 directory. Android Auto Backup excludes both large audio directories; uninstall removes private files. Room stores metadata and local URI, never MP3 bytes. Deleting a downloaded item removes the owned file and its download row, preserving catalog, history and favorites. Files in `.part` should be retained for pause/resume; cleanup of abandoned parts needs further verification.
