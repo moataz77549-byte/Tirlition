@@ -179,7 +179,7 @@ data class ListeningHistoryEntity(
 @Entity(
     tableName = "downloads",
     foreignKeys = [ForeignKey(entity = ContentSourceEntity::class, parentColumns = ["id"], childColumns = ["sourceId"], onDelete = ForeignKey.NO_ACTION)],
-    indices = [Index("sourceId"), Index("mushafId"), Index("surahNumber")],
+    indices = [Index("sourceId"), Index("mushafId"), Index("surahNumber"), Index(value = ["contentId"], unique = true)],
 )
 data class DownloadEntity(
     @PrimaryKey val id: String,
@@ -198,6 +198,20 @@ data class DownloadEntity(
     val bytesDownloaded: Long = 0,
     val totalBytes: Long? = null,
     val updatedAt: Long,
+    @ColumnInfo(defaultValue = "''") val contentId: String = "",
+    val expectedSize: Long? = null,
+    val mimeType: String? = null,
+    val format: String? = null,
+    val checksumAlgorithm: String? = null,
+    val failureReason: String? = null,
+    val etag: String? = null,
+    val lastModified: String? = null,
+    @ColumnInfo(defaultValue = "0") val createdAt: Long = 0,
+    val startedAt: Long? = null,
+    val completedAt: Long? = null,
+    val lastVerifiedAt: Long? = null,
+    @ColumnInfo(defaultValue = "0") val retryCount: Int = 0,
+    val expiresAt: Long? = null,
 )
 
 @Entity(tableName = "playback_progress")

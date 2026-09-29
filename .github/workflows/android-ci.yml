@@ -28,3 +28,22 @@ jobs:
         run: gradle assembleDebug --stacktrace
       - name: Compile release sources
         run: gradle compileReleaseKotlin --stacktrace
+      - name: Build unsigned release candidate
+        run: gradle assembleRelease --stacktrace
+      - name: Stage unsigned candidate and signing tools
+        run: |
+          mkdir -p signing-tools/lib
+          signer="$(find "$ANDROID_HOME/build-tools" -maxdepth 2 -type f -name apksigner | sort -V | tail -n 1)"
+          test -n "$signer"
+          cp "$signer" signing-tools/apksigner
+          cp "$(dirname "$signer")/lib/apksigner.jar" signing-tools/lib/apksigner.jar
+          cp "$(dirname "$signer")/zipalign" signing-tools/zipalign
+          chmod +x signing-tools/apksigner signing-tools/zipalign
+      - uses: actions/upload-artifact@v4
+        with:
+          name: rateel-unsigned-candidate-and-tools
+          path: |
+            app/build/outputs/apk/release/*.apk
+            signing-tools/
+          if-no-files-found: error
+          retention-days: 7

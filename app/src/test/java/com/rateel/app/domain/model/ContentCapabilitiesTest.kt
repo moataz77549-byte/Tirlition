@@ -17,13 +17,13 @@ class ContentCapabilitiesTest {
         assertFalse(result.canKeepOffline)
     }
 
-    @Test fun liveChannelCannotBeRecordedOrDownloaded() {
+    @Test fun unverifiedLiveChannelIsDisabledUntilStreamCheckPasses() {
         val result = ContentCapabilityResolver.resolve(
             PlannedSourceCatalog.mp3QuranLiveTv,
             ContentAsset(SourceIds.MP3_QURAN_LIVE_TV, "win.holol.com",
                 SourceIds.MP3_QURAN_V3, isLiveChannel = true),
         )
-        assertTrue(result.canStream)
+        assertFalse(result.canStream)
         assertFalse(result.canRecord)
         assertFalse(result.canDownload)
     }

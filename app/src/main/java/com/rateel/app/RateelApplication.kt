@@ -10,7 +10,10 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 
 @HiltAndroidApp
-class RateelApplication : Application() {
+class RateelApplication : Application(), androidx.work.Configuration.Provider {
+    @Inject lateinit var workerFactory: androidx.hilt.work.HiltWorkerFactory
+    override val workManagerConfiguration: androidx.work.Configuration
+        get() = androidx.work.Configuration.Builder().setWorkerFactory(workerFactory).build()
     @Inject lateinit var sourceRepository: SourceRepository
 
     private val appScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)

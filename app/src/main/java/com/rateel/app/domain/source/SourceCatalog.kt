@@ -109,8 +109,11 @@ object PlannedSourceCatalog {
         documentationUrl = "https://www.mp3quran.net/ar/api/2",
         licenseType = LicenseType.UNKNOWN,
         allowStreaming = true,
-        isOfficial = true,
-        isVerified = true,
+        isOfficial = false,
+        isVerified = false,
+        isEnabled = false,
+        streamingEnabled = false,
+        disabledReason = "live_tv_asset_urls_unverified",
         lastTechnicalCheckAt = VERIFIED_2026_09_28,
         notes = "Audio from the Quran and Sunna live TV channels. Asset host and downstream rights require separate verification; streaming only.",
     )

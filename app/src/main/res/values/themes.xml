@@ -1,1 +1,11 @@
-<resources><style name="Theme.Rateel" parent="android:style/Theme.Material.Light.NoActionBar"><item name="android:fontFamily">sans</item><item name="android:windowLightStatusBar">true</item></style></resources>
+<resources>
+    <style name="Theme.Rateel" parent="android:style/Theme.Material.Light.NoActionBar">
+        <item name="android:fontFamily">sans</item>
+        <item name="android:windowLightStatusBar">true</item>
+    </style>
+    <style name="Theme.Rateel.Starting" parent="Theme.SplashScreen">
+        <item name="windowSplashScreenBackground">@color/rateel_splash_background</item>
+        <item name="windowSplashScreenAnimatedIcon">@drawable/ic_rateel_foreground</item>
+        <item name="postSplashScreenTheme">@style/Theme.Rateel</item>
+    </style>
+</resources>

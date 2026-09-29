@@ -1,0 +1,3 @@
+# Third-party components — pre-release inventory
+
+The Gradle manifests declare AndroidX Compose, Core, Activity, Lifecycle, Navigation, Room, DataStore, WorkManager, Media3, Hilt integration, Retrofit, OkHttp, Kotlin serialization, Coil and JUnit/test tooling. AndroidX and Kotlin components are published under Apache License 2.0; verify each resolved artifact's license and notice obligations from its published POM before Beta 1. No external artwork or font was imported; the icon XML in this repository is original project artwork. This inventory is a release gate rather than a claim that the resolved dependency graph and all notices have been audited. Provider content licenses and attribution are tracked separately in SOURCES_AND_RIGHTS.md.

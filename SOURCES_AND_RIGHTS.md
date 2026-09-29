@@ -47,6 +47,7 @@ Last review: **2026-09-28**.
 - **Policy:** streaming only. Recording, downloads, caching, offline playback, and sharing the media are disabled until the actual broadcaster's rights are established.
 - **Technical rule:** the API response URL is fetched each refresh; no HLS URL is bundled in the APK. The resolved host is distinct from the API's source of discovery.
 - **Checked:** 2026-09-28. This check confirms API metadata, not a blanket grant for media redistribution.
+- **Runtime status:** disabled, including on existing local databases, because the returned broadcaster assets were observed failing and have not passed a current stream check. Retest and document the actual broadcaster before re-enabling.
 
 ## quran-foundation
 

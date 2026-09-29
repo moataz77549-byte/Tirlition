@@ -7,6 +7,7 @@ import com.rateel.app.data.local.FavoriteDao
 import com.rateel.app.data.local.ListeningHistoryDao
 import com.rateel.app.data.local.LocalRecordingEntity
 import com.rateel.app.data.local.RecordingDao
+import com.rateel.app.download.RateelDownloadManager
 import com.rateel.app.domain.model.ContentCapabilities
 import com.rateel.app.domain.model.PlaybackItem
 import com.rateel.app.domain.model.PlaybackType
@@ -25,12 +26,14 @@ class LibraryViewModel @Inject constructor(
     private val dao: RecordingDao,
     historyDao: ListeningHistoryDao,
     favoriteDao: FavoriteDao,
+    downloadManager: RateelDownloadManager,
     private val player: PlaybackController,
     @ApplicationContext private val context: Context,
 ) : ViewModel() {
     val recordings = dao.observeAll().stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
     val history = historyDao.observeRecent().stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
     val favorites = favoriteDao.observeAll().stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
+    val downloads = downloadManager.downloads.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
     private fun file(item: LocalRecordingEntity): File? {
         val directory = File(context.filesDir, "recordings").canonicalFile
         return runCatching { File(item.filePath).canonicalFile }.getOrNull()

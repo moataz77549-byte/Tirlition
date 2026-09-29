@@ -35,6 +35,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.rateel.app.R
+import com.rateel.app.BuildConfig
 import com.rateel.app.data.settings.ThemeMode
 import com.rateel.app.domain.model.ContentSource
 import com.rateel.app.feature.home.HomeAction
@@ -46,12 +47,16 @@ import com.rateel.app.feature.sources.SourcesViewModel
 @Composable
 fun HomeRoute(
     onSettings: () -> Unit,
+    onRadio: (String) -> Unit,
+    onReciter: (String) -> Unit,
     viewModel: HomeViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     HomeScreen(
         state = state,
         onSettings = onSettings,
+        onRadio = onRadio,
+        onReciter = onReciter,
         onRetry = { viewModel.onAction(HomeAction.Retry) },
     )
 }
@@ -61,6 +66,8 @@ fun HomeRoute(
 private fun HomeScreen(
     state: HomeUiState,
     onSettings: () -> Unit,
+    onRadio: (String) -> Unit,
+    onReciter: (String) -> Unit,
     onRetry: () -> Unit,
 ) {
     Scaffold(
@@ -128,6 +135,7 @@ private fun HomeScreen(
                     ListItem(
                         headlineContent = { Text(radio.nameArabic) },
                         supportingContent = { radio.category?.let { Text(it) } },
+                        modifier = Modifier.fillMaxWidth().clickable { onRadio(radio.id) },
                     )
                 }
             }
@@ -137,6 +145,7 @@ private fun HomeScreen(
                     ListItem(
                         headlineContent = { Text(reciter.nameArabic) },
                         supportingContent = { reciter.country?.let { Text(it) } },
+                        modifier = Modifier.fillMaxWidth().clickable { onReciter(reciter.id) },
                     )
                 }
             }
@@ -147,6 +156,7 @@ private fun HomeScreen(
 @Composable
 fun SettingsRoute(
     onSources: () -> Unit,
+    onAbout: () -> Unit,
     viewModel: SettingsViewModel = hiltViewModel(),
 ) {
     val selected by viewModel.themeMode.collectAsStateWithLifecycle()
@@ -154,6 +164,7 @@ fun SettingsRoute(
         selected = selected,
         onSelected = viewModel::setTheme,
         onSources = onSources,
+        onAbout = onAbout,
     )
 }
 
@@ -163,6 +174,7 @@ private fun SettingsScreen(
     selected: ThemeMode,
     onSelected: (ThemeMode) -> Unit,
     onSources: () -> Unit,
+    onAbout: () -> Unit,
 ) {
     Scaffold(topBar = { TopAppBar(title = { Text(stringResource(R.string.settings)) }) }) { padding ->
         Column(
@@ -192,6 +204,25 @@ private fun SettingsScreen(
                 supportingContent = { Text(stringResource(R.string.sources_and_rights_summary)) },
                 modifier = Modifier.fillMaxWidth().clickable(onClick = onSources),
             )
+            ListItem(headlineContent = { Text(stringResource(R.string.about_rateel)) },
+                supportingContent = { Text(BuildConfig.VERSION_NAME) },
+                modifier = Modifier.fillMaxWidth().clickable(onClick = onAbout))
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun AboutRoute(onBack: () -> Unit, onSources: () -> Unit) {
+    Scaffold(topBar = { TopAppBar(title = { Text(stringResource(R.string.about_rateel)) },
+        navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Outlined.ArrowBack,
+            contentDescription = stringResource(R.string.back)) } }) }) { padding ->
+        Column(Modifier.padding(padding).padding(20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Text(stringResource(R.string.app_name), style = MaterialTheme.typography.headlineMedium)
+            Text("${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE})")
+            Text(stringResource(R.string.about_development))
+            TextButton(onClick = onSources) { Text(stringResource(R.string.sources_and_rights)) }
+            Text("github.com/moataz77549-byte/Tirlition")
         }
     }
 }

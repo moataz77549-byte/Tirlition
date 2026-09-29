@@ -63,3 +63,7 @@ The recorder boundary accepts only progressive MP3/AAC from a verified source an
 
 ## Offline audio development
 The stage-4 branch adds rights-gated, app-private audio downloads, a Wi-Fi-only preference, and local-first playback in the existing Media3 engine. Downloads remain subject to device and CI verification. No final APK or release is produced at this stage.
+
+## Release status
+
+Beta 1 is not published. The Stage 5 release gate and evidence are tracked in [FINAL_AUDIT.md](FINAL_AUDIT.md) and [RELEASE_CHECKLIST.md](RELEASE_CHECKLIST.md). Android configuration targets API 26–36. The offline audio integration is still a draft under CI and device validation; do not treat the current branch as a signed release.
