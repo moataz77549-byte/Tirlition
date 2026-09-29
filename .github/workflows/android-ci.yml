@@ -28,3 +28,5 @@ jobs:
         run: gradle assembleDebug --stacktrace
       - name: Compile release sources
         run: gradle compileReleaseKotlin --stacktrace
+      - name: Build unsigned release candidate
+        run: gradle assembleRelease --stacktrace
