@@ -86,13 +86,18 @@ class RateelDownloadManager @Inject constructor(
             storage.part(storage.file(row.sourceId, row.reciterId.orEmpty(), row.mushafId.orEmpty(), n, row.format)).delete()
         }
     }
-    suspend fun delete(id: String) { val row = dao.get(id) ?: return; cancel(id)
-        if (row.localUri != null && playback.state.value.currentItem?.localUri == row.localUri) playback.stop()
+    suspend fun delete(id: String) { val row = dao.get(id) ?: return
+        check(row.localUri == null || playback.state.value.currentItem?.localUri != row.localUri) { "PLAYBACK_BUSY" }
+        cancel(id)
         row.localUri?.let { storage.ownedFile(it)?.delete() }
         row.surahNumber?.let { n -> storage.file(row.sourceId, row.reciterId.orEmpty(), row.mushafId.orEmpty(), n, row.format).let { storage.part(it).delete() } }
         dao.remove(id)
     }
-    suspend fun deleteMushaf(id: String) { dao.byMushaf(id).forEach { delete(it.id) } }
+    suspend fun deleteMushaf(id: String) {
+        val rows = dao.byMushaf(id)
+        check(rows.none { it.localUri != null && playback.state.value.currentItem?.localUri == it.localUri }) { "PLAYBACK_BUSY" }
+        rows.forEach { delete(it.id) }
+    }
     suspend fun localUri(contentId: String): String? {
         val row = dao.byContent(contentId) ?: return null
         if (row.status != "COMPLETED") return null

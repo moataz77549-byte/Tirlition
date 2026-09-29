@@ -30,7 +30,11 @@ class DownloadsViewModel @Inject constructor(
     fun pause(row: DownloadEntity) = viewModelScope.launch { manager.pause(row.id) }
     fun resume(row: DownloadEntity) = viewModelScope.launch { manager.resume(row.id) }
     fun cancel(row: DownloadEntity) = viewModelScope.launch { manager.cancel(row.id) }
-    fun delete(row: DownloadEntity) = viewModelScope.launch { manager.delete(row.id); refreshStorage() }
-    fun deleteMushaf(id: String) = viewModelScope.launch { manager.deleteMushaf(id); refreshStorage() }
+    fun delete(row: DownloadEntity) = viewModelScope.launch {
+        runCatching { manager.delete(row.id); refreshStorage() }.onFailure { error.value = it.message }
+    }
+    fun deleteMushaf(id: String) = viewModelScope.launch {
+        runCatching { manager.deleteMushaf(id); refreshStorage() }.onFailure { error.value = it.message }
+    }
     fun wifiOnly(value: Boolean) = viewModelScope.launch { manager.wifiOnly(value) }
 }

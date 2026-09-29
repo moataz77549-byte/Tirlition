@@ -37,7 +37,11 @@ fun DownloadsRoute(vm: DownloadsViewModel = hiltViewModel()) {
         LazyColumn(Modifier.padding(padding), contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             item { Row { Text(stringResource(R.string.download_wifi_only), Modifier.weight(1f)); Switch(wifi, vm::wifiOnly) } }
             item { Text(stringResource(R.string.storage_usage, readable(usage.first), readable(usage.second), readable(usage.third))) }
-            error?.let { item { Text(stringResource(if (it == "NO_SPACE") R.string.download_no_space else R.string.download_error), color = MaterialTheme.colorScheme.error) } }
+            error?.let { item { Text(stringResource(when (it) {
+                "NO_SPACE" -> R.string.download_no_space
+                "PLAYBACK_BUSY" -> R.string.download_playback_busy
+                else -> R.string.download_error
+            }), color = MaterialTheme.colorScheme.error) } }
             if (rows.isEmpty()) item { Text(stringResource(R.string.home_empty)) }
             val groups = rows.filter { it.mushafId != null }.groupBy { it.mushafId!! }
             groups.forEach { (mushaf, group) ->

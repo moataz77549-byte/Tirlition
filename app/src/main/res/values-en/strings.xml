@@ -103,4 +103,5 @@
 <string name="download_expired">Offline copy needs a sync</string>
 <string name="download_delete_mushaf">Delete downloaded mushaf</string>
 <string name="download_delete_confirm">Delete %1$d downloaded files and free about %2$s?</string>
+<string name="download_playback_busy">Stop playing this surah before deleting its file.</string>
 </resources>

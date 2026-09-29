@@ -103,4 +103,5 @@
 <string name="download_expired">تحتاج النسخة المحلية إلى مزامنة</string>
 <string name="download_delete_mushaf">حذف المصحف من الجهاز</string>
 <string name="download_delete_confirm">سيُحذف %1$d ملفًا محملًا ويُحرر نحو %2$s من المساحة. هل تريد المتابعة؟</string>
+<string name="download_playback_busy">أوقف تشغيل السورة قبل حذف ملفها.</string>
 </resources>
