@@ -59,6 +59,7 @@
     <string name="add_favorite">Add to favorites</string>
     <string name="remove_favorite">Remove from favorites</string>
     <string name="recording_active">Saving stream</string>
+    <string name="recording_saved">Recording saved</string>
     <string name="stop_recording">Stop and save</string>
     <string name="save_clip">Save clip</string>
     <string name="free_recording">Free recording</string>

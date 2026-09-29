@@ -59,6 +59,7 @@
     <string name="add_favorite">إضافة إلى المفضلة</string>
     <string name="remove_favorite">إزالة من المفضلة</string>
     <string name="recording_active">جارٍ حفظ البث</string>
+    <string name="recording_saved">تم حفظ التسجيل</string>
     <string name="stop_recording">إيقاف وحفظ</string>
     <string name="save_clip">حفظ مقطع</string>
     <string name="free_recording">تسجيل حر</string>

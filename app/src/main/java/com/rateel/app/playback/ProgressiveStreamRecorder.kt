@@ -64,11 +64,7 @@ class ProgressiveStreamRecorder @Inject constructor(
         val directory = File(context.filesDir, "recordings").apply { mkdirs() }
         if (StatFs(directory.path).availableBytes < 25L * 1024 * 1024)
             return@withLock Result.failure(IOException("low_storage"))
-        var extension = when (request.endpoint.format?.lowercase()) {
-            "mp3" -> "mp3"
-            "aac", "aac+" -> "aac"
-            else -> null
-        }
+        var extension: String? = null
         val startedAt = System.currentTimeMillis()
         val temp = File(directory, "rateel_pending_${UUID.randomUUID()}.part")
         val id = UUID.randomUUID().toString()
@@ -83,15 +79,8 @@ class ProgressiveStreamRecorder @Inject constructor(
                 try {
                     networkCall.execute().use { response ->
                         if (!response.isSuccessful) throw IOException("stream_http_${response.code}")
-                        val contentType = response.header("Content-Type").orEmpty().lowercase()
-                        if (contentType.contains("html") || contentType.contains("mpegurl"))
-                            throw IOException("unsupported_stream_response")
-                        extension = when {
-                            contentType.startsWith("audio/mpeg") || contentType.startsWith("audio/mp3") -> "mp3"
-                            contentType.startsWith("audio/aac") || contentType.startsWith("audio/x-aac") -> "aac"
-                            contentType.isBlank() || contentType.startsWith("application/octet-stream") -> extension
-                            else -> null
-                        }
+                        extension = ProgressiveAudioFormat.resolve(
+                            request.endpoint.format, response.header("Content-Type"))
                         if (extension == null) throw IOException("unsupported_stream_response")
                         val input = response.body?.byteStream() ?: throw IOException("empty_stream")
                         val started = android.os.SystemClock.elapsedRealtime()

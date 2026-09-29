@@ -33,4 +33,11 @@ class RecordingPolicyTest {
             RecordingFileNames.create("mp3quran:radio/23", 42, "aac"))
         assertEquals(listOf(5, 10, 15, 30), RecordingDurations.supportedMinutes)
     }
+    @Test fun responseTypeControlsContainerAndRejectsHtml() {
+        assertEquals("mp3", ProgressiveAudioFormat.resolve(null, "audio/mpeg; charset=binary"))
+        assertEquals("aac", ProgressiveAudioFormat.resolve(null, "audio/aacp"))
+        assertEquals("aac", ProgressiveAudioFormat.resolve("aac", "application/octet-stream"))
+        assertEquals(null, ProgressiveAudioFormat.resolve("mp3", "text/html"))
+        assertEquals(null, ProgressiveAudioFormat.resolve(null, "application/vnd.apple.mpegurl"))
+    }
 }

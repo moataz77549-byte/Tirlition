@@ -56,3 +56,19 @@ object RecordingFileNames {
         return "rateel_recording_${safe}_${timestamp}.$extension"
     }
 }
+
+object ProgressiveAudioFormat {
+    fun resolve(declared: String?, contentType: String?): String? {
+        val header = contentType.orEmpty().substringBefore(';').trim().lowercase()
+        return when {
+            header == "audio/mpeg" || header == "audio/mp3" -> "mp3"
+            header == "audio/aac" || header == "audio/aacp" || header == "audio/x-aac" -> "aac"
+            header.isEmpty() || header == "application/octet-stream" -> when (declared?.lowercase()) {
+                "mp3" -> "mp3"
+                "aac", "aac+" -> "aac"
+                else -> null
+            }
+            else -> null
+        }
+    }
+}

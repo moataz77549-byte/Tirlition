@@ -127,5 +127,5 @@ abstract class BindingsModule {
     @Binds abstract fun bindMushafRepository(impl: LocalMushafRepository): MushafRepository
     @Binds abstract fun bindAudioRepository(impl: LocalAudioRepository): AudioRepository
     @Binds abstract fun bindPlaybackController(impl: Media3PlaybackController): PlaybackController
-    @Binds abstract fun bindStreamRecorder(impl: ProgressiveStreamRecorder): StreamRecorder
+    @Binds @Singleton abstract fun bindStreamRecorder(impl: ProgressiveStreamRecorder): StreamRecorder
 }

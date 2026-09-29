@@ -43,6 +43,13 @@ class RecordingService : Service() {
                     (getSystemService(NOTIFICATION_SERVICE) as NotificationManager).notify(ID,
                         notification(state.elapsedMs / 1000))
                 }
+                if (sessionStarted && state.status == RecordingStatus.COMPLETED) {
+                    (getSystemService(NOTIFICATION_SERVICE) as NotificationManager).notify(ID + 1,
+                        NotificationCompat.Builder(this@RecordingService, CHANNEL)
+                            .setSmallIcon(android.R.drawable.ic_btn_speak_now)
+                            .setContentTitle(getString(R.string.recording_saved))
+                            .setContentText(stationName).setAutoCancel(true).build())
+                }
                 if (sessionStarted && state.status in setOf(
                         RecordingStatus.COMPLETED, RecordingStatus.FAILED, RecordingStatus.CANCELLED))
                     stopSelf()
