@@ -30,6 +30,8 @@ interface SourceDao {
 
     @Upsert
     suspend fun upsertAll(items: List<ContentSourceEntity>)
+    @Query("UPDATE content_sources SET isEnabled = 0, streamingEnabled = 0, isVerified = 0, disabledReason = 'live_tv_asset_urls_unverified' WHERE id = 'mp3quran-live-tv'")
+    suspend fun disableUnverifiedLiveTv()
 }
 
 @Dao
@@ -178,5 +180,7 @@ interface DownloadDao {
     @Query("UPDATE downloads SET status = :status, updatedAt = :now WHERE id = :id") suspend fun status(id: String, status: String, now: Long)
     @Query("UPDATE downloads SET bytesDownloaded = :bytes, totalBytes = :total, updatedAt = :now WHERE id = :id AND status = 'DOWNLOADING'")
     suspend fun progressIfDownloading(id: String, bytes: Long, total: Long?, now: Long)
+    @Query("UPDATE downloads SET status = 'FAILED', failureReason = 'INTEGRITY_CHECK_FAILED', updatedAt = :now WHERE id = :id")
+    suspend fun corrupt(id: String, now: Long)
     @Query("DELETE FROM downloads WHERE id = :id") suspend fun remove(id: String)
 }

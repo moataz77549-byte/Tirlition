@@ -9,7 +9,7 @@ This is a release gate, not a completion claim. `PARTIAL` does not pass. The can
 | 1 | Database migrations | PARTIAL | Explicit 1→2, 2→3, 3→4 migrations; actual upgrade fixture/device test pending. |
 | 1 | CI/build/test/lint | PARTIAL | Existing main CI passed for stage 3; stage-4 sources require new CI and instrumented execution. |
 | 2 | Real MP3Quran catalog and rights gate | PARTIAL | Network adapters and fail-closed policies exist; current API/ten-radio/two-reciter playback matrix unverified. |
-| 2 | Live TV Makkah/Madinah | PARTIAL | Stage-3 status records live-TV API links as HTTP 404 on 2026-09-28. Do not claim a working official broadcast. |
+| 2 | Live TV Makkah/Madinah | PARTIAL | Stage-3 status records live-TV API links as HTTP 404 on 2026-09-28. The catalog entry is disabled pending retest; do not claim a working official broadcast. |
 | 2 | Quran Foundation | NOT_APPLICABLE | Disabled until backend and resource-specific permission. |
 | 2 | Fake data in production | IMPLEMENTED | Fake repositories under `src/debug` only; production source uses remote adapters and Room. |
 | 3 | Unified Media3 service/controller and UI | PARTIAL | Single ExoPlayer, MediaSessionService, mini/full UI in code; no device notification/lock/Bluetooth/background acceptance run. |

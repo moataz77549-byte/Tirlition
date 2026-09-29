@@ -59,5 +59,6 @@ class LocalSourceRepository @Inject constructor(
 
     override suspend fun ensureBuiltInCatalog() {
         dao.insertIfMissing(PlannedSourceCatalog.all.map { it.toEntity() })
+        dao.disableUnverifiedLiveTv()
     }
 }

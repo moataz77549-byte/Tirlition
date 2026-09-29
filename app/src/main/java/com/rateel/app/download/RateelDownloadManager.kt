@@ -16,6 +16,7 @@ import com.rateel.app.domain.model.ContentCapabilityResolver
 import com.rateel.app.domain.model.SurahAudio
 import com.rateel.app.domain.repository.AudioRepository
 import com.rateel.app.domain.repository.SourceRepository
+import com.rateel.app.playback.PlaybackController
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -27,7 +28,8 @@ import java.net.URI
 class RateelDownloadManager @Inject constructor(
     private val dao: DownloadDao, private val sources: SourceRepository,
     private val audio: AudioRepository, private val settings: AppSettings,
-    private val storage: OfflineMediaStore, @ApplicationContext private val context: Context,
+    private val storage: OfflineMediaStore, private val playback: PlaybackController,
+    @ApplicationContext private val context: Context,
 ) {
     val downloads = dao.observeAll()
     private val work get() = WorkManager.getInstance(context)
@@ -85,7 +87,8 @@ class RateelDownloadManager @Inject constructor(
         }
     }
     suspend fun delete(id: String) { val row = dao.get(id) ?: return; cancel(id)
-        row.localUri?.let { File(Uri.parse(it).path ?: "").delete() }
+        if (row.localUri != null && playback.state.value.currentItem?.localUri == row.localUri) playback.stop()
+        row.localUri?.let { storage.ownedFile(it)?.delete() }
         row.surahNumber?.let { n -> storage.file(row.sourceId, row.reciterId.orEmpty(), row.mushafId.orEmpty(), n, row.format).let { storage.part(it).delete() } }
         dao.remove(id)
     }
@@ -93,9 +96,12 @@ class RateelDownloadManager @Inject constructor(
     suspend fun localUri(contentId: String): String? {
         val row = dao.byContent(contentId) ?: return null
         if (row.status != "COMPLETED") return null
-        val file = row.localUri?.let { File(Uri.parse(it).path ?: "") }
+        val file = row.localUri?.let { storage.ownedFile(it) }
         if (file?.isFile != true || file.length() <= 0L) { dao.status(row.id, "MISSING_FILE", System.currentTimeMillis()); return null }
         if (row.expiresAt != null && row.expiresAt < System.currentTimeMillis()) { dao.status(row.id, "EXPIRED", System.currentTimeMillis()); return null }
+        if (!storage.plausibleAudio(file, row.format, row.fileSizeBytes)) {
+            dao.corrupt(row.id, System.currentTimeMillis()); return null
+        }
         return row.localUri
     }
     suspend fun requeuePending() { dao.pending().forEach { schedule(it.id) } }
