@@ -47,7 +47,7 @@ fun RateelApp() {
     val navController = rememberNavController()
     val backStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = backStackEntry?.destination?.route
-    val secondaryRoutes = setOf("settings", "sources-rights")
+        val secondaryRoutes = setOf("settings", "sources-rights", "about")
 
     Scaffold(
         bottomBar = {
@@ -91,7 +91,9 @@ fun RateelApp() {
             modifier = Modifier.padding(padding),
         ) {
             composable(Destination.HOME.route) {
-                HomeRoute(onSettings = { navController.navigate("settings") })
+                HomeRoute(onSettings = { navController.navigate("settings") },
+                    onRadio = { navController.navigate("radio/${Uri.encode(it)}") },
+                    onReciter = { navController.navigate("reciter/${Uri.encode(it)}") })
             }
             composable(Destination.RADIO.route) {
                 RadiosRoute(onStation = { navController.navigate("radio/${Uri.encode(it)}") })
@@ -128,8 +130,11 @@ fun RateelApp() {
             composable(Destination.DOWNLOADS.route) { DownloadsRoute() }
             composable(Destination.LIBRARY.route) { LibraryRoute(onSurah = { navController.navigate("surah/${Uri.encode(it)}") }) }
             composable("settings") {
-                SettingsRoute(onSources = { navController.navigate("sources-rights") })
+                SettingsRoute(onSources = { navController.navigate("sources-rights") },
+                    onAbout = { navController.navigate("about") })
             }
+            composable("about") { AboutRoute(onBack = { navController.popBackStack() },
+                onSources = { navController.navigate("sources-rights") }) }
             composable("sources-rights") {
                 SourcesAndRightsRoute(onBack = { navController.popBackStack() })
             }

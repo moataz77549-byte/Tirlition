@@ -89,4 +89,18 @@
 <string name="no_search_results">No results</string>
 <string name="no_downloads">No downloaded recitations</string>
 <string name="downloaded_count">%1$d downloaded surahs</string>
+<string name="about_rateel">About Rateel</string>
+<string name="about_development">Development build under audit; Beta 1 is not released yet.</string>
+<string name="download_no_space">Not enough storage</string>
+<string name="download_error">Download could not complete</string>
+<string name="download_queued">Queued</string>
+<string name="download_active">Downloading</string>
+<string name="download_paused">Paused</string>
+<string name="download_complete">Downloaded</string>
+<string name="download_failed">Download failed</string>
+<string name="download_cancelled">Download cancelled</string>
+<string name="download_missing">File missing</string>
+<string name="download_expired">Offline copy needs a sync</string>
+<string name="download_delete_mushaf">Delete downloaded mushaf</string>
+<string name="download_delete_confirm">Delete %1$d downloaded files and free about %2$s?</string>
 </resources>

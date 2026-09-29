@@ -89,4 +89,18 @@
 <string name="no_search_results">لا توجد نتائج</string>
 <string name="no_downloads">لا توجد تلاوات محملة</string>
 <string name="downloaded_count">%1$d سورة محملة</string>
+<string name="about_rateel">حول رتيل</string>
+<string name="about_development">نسخة تطوير قيد التدقيق؛ لم يصدر Beta 1 بعد.</string>
+<string name="download_no_space">المساحة غير كافية</string>
+<string name="download_error">تعذر إكمال التنزيل</string>
+<string name="download_queued">في قائمة الانتظار</string>
+<string name="download_active">جاري التنزيل</string>
+<string name="download_paused">متوقف مؤقتًا</string>
+<string name="download_complete">محمل</string>
+<string name="download_failed">فشل التنزيل</string>
+<string name="download_cancelled">أُلغي التنزيل</string>
+<string name="download_missing">الملف غير موجود</string>
+<string name="download_expired">تحتاج النسخة المحلية إلى مزامنة</string>
+<string name="download_delete_mushaf">حذف المصحف من الجهاز</string>
+<string name="download_delete_confirm">سيُحذف %1$d ملفًا محملًا ويُحرر نحو %2$s من المساحة. هل تريد المتابعة؟</string>
 </resources>
