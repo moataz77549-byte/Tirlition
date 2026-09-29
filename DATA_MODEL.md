@@ -1,0 +1,3 @@
+# Stage 3 data model
+
+`PlaybackItem` has a stable ID, type, source, remote/local URI, title, metadata, live flag and capabilities. `PlaybackProgressEntity` stores non-live ID, position, duration, completion and update time. `ListeningHistoryEntity` records the latest play per content ID, title snapshot, source and played duration. `LocalRecordingEntity` stores the local path, station/source IDs, title, timestamps, duration, size, MIME/codec, mode, rights snapshot and completion. Room migration 2→3 adds the latter fields without destructive fallback. Recordings are app-managed and never synced to Supabase.

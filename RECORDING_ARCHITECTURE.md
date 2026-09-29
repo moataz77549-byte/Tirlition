@@ -1,0 +1,7 @@
+# Recording architecture (stage 3 in progress)
+
+`StreamRecorder` is the domain boundary. `ProgressiveStreamRecorder` rechecks the latest source record and `ContentCapabilityResolver` immediately before opening a connection. Only verified hosts with explicit `canRecord` and progressive MP3/AAC over HTTPS pass the gate. HLS, unknown hosts, disabled sources and unverified rights cannot be recorded. All current production stations have recording disabled, so there is no recording action in the UI.
+
+When authorized, the recorder streams OkHttp response bytes into an app-managed `files/recordings/*.part` file using bounded memory. It supports a free session and 5/10/15/30-minute durations, low-storage checks, cancellation, final rename and Room metadata. HLS recording is unsupported because playlists, discontinuities, encryption and container conversion need separate handling. Playback and recorder use independent network connections; changing the playback station does not change the recording target.
+
+The recorder implementation is not yet foreground-managed and has no recording notification. A process kill can leave a `.part` file, and a size check alone does not prove a playable output. There is no production recording UI until those gaps and end-to-end device tests are resolved and an actual source grants recording rights. The files remain local; no recording is uploaded to Supabase.

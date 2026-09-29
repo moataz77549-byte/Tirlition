@@ -1,0 +1,7 @@
+# Playback architecture (stage 3 in progress)
+
+`UnifiedPlaybackService` is a `MediaSessionService` because Rateel needs background playback and system controls, but does not yet expose a browsable media library. It owns the only `ExoPlayer` and `MediaSession`; `Media3PlaybackController` connects using `SessionToken` and `MediaController`. The ViewModel collects a `StateFlow` and never owns a player. The service configures audio focus and becoming-noisy handling through Media3.
+
+`PlaybackMediaItemMapper` supplies title, artist, artwork and stable media ID. Radios and surahs share the same engine; queue order is derived from the current radio list or the available surahs of a mushaf. Local recordings use the same player. Radio progress is never persisted. Other progress is written to Room at approximately ten-second intervals and on state transitions; the controller reads it when the user explicitly starts the same item again. Listening history reuses the latest row for a stable content ID.
+
+A sleep timer is owned by the service and pauses the player after the selected duration. It survives UI navigation, but not process death. An app launch does not start audio automatically. The current item/queue is not yet reconstructed by stable IDs after process death. Stream reconnect/failover, automatic session restoration, verified device testing, and richer status/error messages remain open.

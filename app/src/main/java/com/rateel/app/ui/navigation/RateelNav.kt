@@ -126,7 +126,7 @@ fun RateelApp() {
                 )
             }
             composable(Destination.DOWNLOADS.route) { Placeholder(R.string.downloads) }
-            composable(Destination.LIBRARY.route) { Placeholder(R.string.library) }
+            composable(Destination.LIBRARY.route) { LibraryRoute() }
             composable("settings") {
                 SettingsRoute(onSources = { navController.navigate("sources-rights") })
             }

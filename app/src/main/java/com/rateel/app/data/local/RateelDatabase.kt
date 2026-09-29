@@ -106,7 +106,7 @@ interface CacheMetadataDao {
         CacheMetadataEntity::class,
         LocalRecordingEntity::class,
     ],
-    version = 2,
+    version = 3,
     exportSchema = true,
 )
 abstract class RateelDatabase : RoomDatabase() {
@@ -117,4 +117,48 @@ abstract class RateelDatabase : RoomDatabase() {
     abstract fun audioTrackDao(): AudioTrackDao
     abstract fun surahMetadataDao(): SurahMetadataDao
     abstract fun cacheMetadataDao(): CacheMetadataDao
+    abstract fun playbackProgressDao(): PlaybackProgressDao
+    abstract fun listeningHistoryDao(): ListeningHistoryDao
+    abstract fun favoriteDao(): FavoriteDao
+    abstract fun recordingDao(): RecordingDao
+}
+
+@Dao
+interface PlaybackProgressDao {
+    @Query("SELECT * FROM playback_progress WHERE contentId = :id LIMIT 1")
+    suspend fun get(id: String): PlaybackProgressEntity?
+    @Upsert suspend fun upsert(item: PlaybackProgressEntity)
+}
+
+@Dao
+interface ListeningHistoryDao {
+    @Query("SELECT * FROM listening_history WHERE contentType = :type AND contentId = :id ORDER BY playedAt DESC LIMIT 1")
+    suspend fun latest(type: String, id: String): ListeningHistoryEntity?
+    @Query("SELECT * FROM listening_history ORDER BY playedAt DESC LIMIT 100")
+    fun observeRecent(): Flow<List<ListeningHistoryEntity>>
+    @Upsert suspend fun upsert(item: ListeningHistoryEntity)
+}
+
+@Dao
+interface FavoriteDao {
+    @Query("SELECT * FROM favorites ORDER BY createdAt DESC")
+    fun observeAll(): Flow<List<FavoriteEntity>>
+    @Query("SELECT * FROM favorites WHERE contentType = :type AND contentId = :id LIMIT 1")
+    suspend fun get(type: String, id: String): FavoriteEntity?
+    @Insert(onConflict = OnConflictStrategy.IGNORE) suspend fun insert(item: FavoriteEntity)
+    @Query("DELETE FROM favorites WHERE contentType = :type AND contentId = :id")
+    suspend fun delete(type: String, id: String)
+}
+
+@Dao
+interface RecordingDao {
+    @Query("SELECT * FROM recordings ORDER BY createdAt DESC")
+    fun observeAll(): Flow<List<LocalRecordingEntity>>
+    @Query("SELECT * FROM recordings WHERE id = :id LIMIT 1")
+    suspend fun get(id: String): LocalRecordingEntity?
+    @Insert(onConflict = OnConflictStrategy.ABORT) suspend fun insert(item: LocalRecordingEntity)
+    @Query("UPDATE recordings SET title = :title WHERE id = :id")
+    suspend fun rename(id: String, title: String)
+    @Query("DELETE FROM recordings WHERE id = :id")
+    suspend fun delete(id: String)
 }

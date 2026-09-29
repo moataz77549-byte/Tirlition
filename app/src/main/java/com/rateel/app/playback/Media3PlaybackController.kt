@@ -2,12 +2,14 @@ package com.rateel.app.playback
 
 import android.content.ComponentName
 import android.content.Context
+import android.content.Intent
 import androidx.core.content.ContextCompat
 import androidx.media3.common.C
 import androidx.media3.common.Player
 import androidx.media3.session.MediaController
 import androidx.media3.session.SessionToken
 import com.rateel.app.domain.model.PlaybackItem
+import com.rateel.app.data.local.PlaybackProgressDao
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -22,7 +24,9 @@ import kotlinx.coroutines.launch
 @Singleton
 class Media3PlaybackController @Inject constructor(
     @ApplicationContext context: Context,
+    private val progressDao: PlaybackProgressDao,
 ) : PlaybackController {
+    private val appContext = context.applicationContext
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
     private val stateMutable = MutableStateFlow(UnifiedPlaybackState())
     override val state: StateFlow<UnifiedPlaybackState> = stateMutable
@@ -79,8 +83,15 @@ class Media3PlaybackController @Inject constructor(
         )
         withController { player ->
             player.setMediaItems(items.map(PlaybackMediaItemMapper::toMediaItem), startIndex, 0L)
-            player.prepare()
-            player.play()
+            scope.launch {
+                val item = items[startIndex]
+                if (!item.isLive) {
+                    val saved = kotlinx.coroutines.withContext(Dispatchers.IO) { progressDao.get(item.id) }
+                    if (saved != null && !saved.completed) player.seekTo(saved.positionMs)
+                }
+                player.prepare()
+                player.play()
+            }
         }
     }
 
@@ -102,6 +113,15 @@ class Media3PlaybackController @Inject constructor(
     }
     override fun setRepeatMode(repeatMode: Int) { withController { it.repeatMode = repeatMode } }
     override fun setShuffle(enabled: Boolean) { withController { it.shuffleModeEnabled = enabled } }
+    override fun setSleepTimer(minutes: Int?) {
+        require(minutes == null || minutes in 1..180)
+        withController {
+            appContext.startService(Intent(appContext, UnifiedPlaybackService::class.java).apply {
+                action = UnifiedPlaybackService.ACTION_SLEEP_TIMER
+                putExtra(UnifiedPlaybackService.EXTRA_MINUTES, minutes ?: 0)
+            })
+        }
+    }
 
     private fun update(player: Player) {
         val index = player.currentMediaItemIndex

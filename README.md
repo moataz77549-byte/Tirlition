@@ -54,3 +54,9 @@ The repository includes GitHub Actions verification. Locally, with Gradle 8.13 a
 ### Source of truth
 
 This GitHub repository is the single source of truth. Official builds/releases must come from a pushed commit, with a clean and traceable Git state. This milestone is not a production release.
+
+## Playback (stage 3 development)
+
+One Media3 ExoPlayer in MediaSessionService plays MP3/AAC radios, HLS when the endpoint is valid, remote surahs and local recordings. MediaSession provides Android media controls in the foreground/background; the UI has a mini and full player. Room stores non-live progress and recent listening. The app does not automatically start audio on launch. The implementation still needs device validation, reconnect/failover, process restoration and foreground recording supervision.
+
+The recorder boundary accepts only progressive MP3/AAC from a verified source and host with explicit recording rights; HLS recording is unsupported. Current catalog sources do not grant recording, so the production UI intentionally omits recording. See PLAYBACK_ARCHITECTURE.md and RECORDING_ARCHITECTURE.md.

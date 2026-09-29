@@ -12,6 +12,9 @@ import androidx.compose.material.icons.outlined.Stop
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -51,6 +54,22 @@ fun MiniPlayer(onOpen: () -> Unit, vm: PlayerViewModel) {
 fun FullPlayerRoute(onBack: () -> Unit, vm: PlayerViewModel = hiltViewModel()) {
     val state by vm.state.collectAsStateWithLifecycle()
     val item = state.currentItem
+    var timerDialog by remember { mutableStateOf(false) }
+    if (timerDialog) AlertDialog(
+        onDismissRequest = { timerDialog = false },
+        title = { Text(stringResource(R.string.sleep_timer)) },
+        text = { Column {
+            listOf(5, 10, 15, 30, 45, 60).forEach { minutes ->
+                TextButton(onClick = { vm.setSleepTimer(minutes); timerDialog = false }) {
+                    Text(stringResource(R.string.minutes_option, minutes))
+                }
+            }
+            TextButton(onClick = { vm.setSleepTimer(null); timerDialog = false }) {
+                Text(stringResource(R.string.cancel_timer))
+            }
+        } },
+        confirmButton = {},
+    )
     Scaffold(topBar = { TopAppBar(title = { Text(stringResource(R.string.player)) },
         navigationIcon = { IconButton(onClick = onBack) {
             Icon(Icons.AutoMirrored.Outlined.ArrowBack, contentDescription = stringResource(R.string.back))
@@ -85,6 +104,7 @@ fun FullPlayerRoute(onBack: () -> Unit, vm: PlayerViewModel = hiltViewModel()) {
                     }
                 }
                 Text("${stringResource(R.string.sources_and_rights)}: ${item.sourceId}")
+                TextButton(onClick = { timerDialog = true }) { Text(stringResource(R.string.sleep_timer)) }
                 state.error?.let { Text(it, color = MaterialTheme.colorScheme.error) }
             }
         }

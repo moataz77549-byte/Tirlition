@@ -1,6 +1,7 @@
 package com.rateel.app.playback
 
 import android.net.Uri
+import android.os.Bundle
 import androidx.media3.common.MediaItem
 import androidx.media3.common.MediaMetadata
 import com.rateel.app.domain.model.PlaybackItem
@@ -19,6 +20,10 @@ object PlaybackMediaItemMapper {
                     .setArtist(item.subtitle)
                     .setArtworkUri(item.artwork?.let(Uri::parse))
                     .setIsPlayable(true)
+                    .setExtras(Bundle().apply {
+                        putBoolean("rateel.isLive", item.isLive)
+                        putString("rateel.sourceId", item.sourceId)
+                    })
                     .build(),
             ).build()
     }

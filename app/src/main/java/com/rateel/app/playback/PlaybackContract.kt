@@ -30,4 +30,5 @@ interface PlaybackController {
     fun setPlaybackSpeed(speed: Float)
     fun setRepeatMode(repeatMode: Int)
     fun setShuffle(enabled: Boolean)
+    fun setSleepTimer(minutes: Int?)
 }

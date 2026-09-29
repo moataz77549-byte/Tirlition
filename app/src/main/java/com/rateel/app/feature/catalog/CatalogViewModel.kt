@@ -75,7 +75,13 @@ class CatalogViewModel @Inject constructor(
         val row = radioRows.value.firstOrNull { it.station.id == id } ?: return
         val endpoint = row.station.streams.firstOrNull() ?: return
         if (!row.capabilities.canStream) return
-        playback.play(row.station.toPlaybackItem(endpoint, row.capabilities))
+        val queue = radioRows.value.mapNotNull { candidate ->
+            candidate.station.streams.firstOrNull()?.let { stream ->
+                candidate.station.toPlaybackItem(stream, candidate.capabilities)
+            }
+        }
+        val index = queue.indexOfFirst { it.id == id }
+        if (index >= 0) playback.playQueue(queue, index)
     }
 
     fun playSurah(id: String) = viewModelScope.launch {

@@ -16,4 +16,5 @@ class PlayerViewModel @Inject constructor(private val controller: PlaybackContro
     fun next() = controller.next()
     fun previous() = controller.previous()
     fun seekTo(positionMs: Long) = controller.seekTo(positionMs)
+    fun setSleepTimer(minutes: Int?) = controller.setSleepTimer(minutes)
 }

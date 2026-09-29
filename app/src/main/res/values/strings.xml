@@ -41,4 +41,16 @@
     <string name="pause">إيقاف مؤقت</string>
     <string name="stop">إيقاف التشغيل</string>
     <string name="player">المشغل</string>
+    <string name="sleep_timer">مؤقت النوم</string>
+    <string name="minutes_option">%1$d دقائق</string>
+    <string name="cancel_timer">إلغاء المؤقت</string>
+    <string name="recordings">التسجيلات</string>
+    <string name="no_recordings">لا توجد تسجيلات محلية.</string>
+    <string name="recording_name">اسم التسجيل</string>
+    <string name="rename">إعادة تسمية</string>
+    <string name="save">حفظ</string>
+    <string name="cancel">إلغاء</string>
+    <string name="delete_recording">حذف التسجيل</string>
+    <string name="recent_listening">آخر الاستماع</string>
+    <string name="favorites">المفضلة</string>
 </resources>
