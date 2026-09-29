@@ -64,6 +64,9 @@ fun FullPlayerRoute(onBack: () -> Unit, vm: PlayerViewModel = hiltViewModel()) {
                     Text(stringResource(R.string.minutes_option, minutes))
                 }
             }
+            if (item?.isLive == false) TextButton(onClick = { vm.setSleepTimer(-1); timerDialog = false }) {
+                Text(stringResource(R.string.end_of_surah))
+            }
             TextButton(onClick = { vm.setSleepTimer(null); timerDialog = false }) {
                 Text(stringResource(R.string.cancel_timer))
             }

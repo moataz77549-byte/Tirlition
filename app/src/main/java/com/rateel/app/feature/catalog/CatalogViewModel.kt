@@ -6,6 +6,8 @@ import androidx.core.content.ContextCompat
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.rateel.app.core.model.AppResult
+import com.rateel.app.data.local.FavoriteDao
+import com.rateel.app.data.local.FavoriteEntity
 import com.rateel.app.data.provider.StreamValidation
 import com.rateel.app.data.provider.StreamValidator
 import com.rateel.app.domain.model.*
@@ -31,9 +33,13 @@ class CatalogViewModel @Inject constructor(
     private val validator: StreamValidator,
     private val playback: PlaybackController,
     private val recorder: StreamRecorder,
+    private val favoritesDao: FavoriteDao,
     @ApplicationContext private val context: Context,
 ) : ViewModel() {
     val recordingState = recorder.state
+    val favoriteIds = favoritesDao.observeAll()
+        .map { items -> items.filter { it.contentType == "radio" }.map { it.contentId }.toSet() }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptySet())
     val radioRows = combine(radios.observeRadios(), sources.observeSources()) { stations, rights ->
         val byId = rights.associateBy { it.id }
         stations.mapNotNull { station ->
@@ -112,6 +118,13 @@ class CatalogViewModel @Inject constructor(
         context.startService(Intent(context, RecordingService::class.java).apply {
             action = if (cancel) RecordingService.ACTION_CANCEL else RecordingService.ACTION_STOP
         })
+    }
+
+    fun toggleRadioFavorite(id: String) = viewModelScope.launch {
+        if (favoritesDao.get("radio", id) == null)
+            favoritesDao.insert(FavoriteEntity(contentType = "radio", contentId = id,
+                createdAt = System.currentTimeMillis()))
+        else favoritesDao.delete("radio", id)
     }
 
     fun playSurah(id: String) = viewModelScope.launch {

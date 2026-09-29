@@ -10,6 +10,7 @@ import androidx.media3.session.MediaController
 import androidx.media3.session.SessionToken
 import com.rateel.app.domain.model.PlaybackItem
 import com.rateel.app.data.local.PlaybackProgressDao
+import com.rateel.app.data.settings.AppSettings
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -19,12 +20,15 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
 @Singleton
 class Media3PlaybackController @Inject constructor(
     @ApplicationContext context: Context,
     private val progressDao: PlaybackProgressDao,
+    private val settings: AppSettings,
+    private val restorer: LastSessionResolver,
 ) : PlaybackController {
     private val appContext = context.applicationContext
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
@@ -33,6 +37,7 @@ class Media3PlaybackController @Inject constructor(
     private var controller: MediaController? = null
     private var pending: ((MediaController) -> Unit)? = null
     private var items = emptyList<PlaybackItem>()
+    private var restored = false
     private val future = MediaController.Builder(
         context,
         SessionToken(context, ComponentName(context, UnifiedPlaybackService::class.java)),
@@ -53,6 +58,23 @@ class Media3PlaybackController @Inject constructor(
                 update(connected)
                 pending?.invoke(connected)
                 pending = null
+                if (connected.mediaItemCount == 0) scope.launch {
+                    val preferences = settings.preferences.first()
+                    val id = preferences.lastPlaybackItemId
+                    if (preferences.autoResume && id != null && connected.mediaItemCount == 0) {
+                        val item = restorer.resolve(id)
+                        if (item != null && connected.mediaItemCount == 0) {
+                            restored = true
+                            items = listOf(item)
+                            connected.setMediaItem(PlaybackMediaItemMapper.toMediaItem(item))
+                            if (!item.isLive) {
+                                val saved = kotlinx.coroutines.withContext(Dispatchers.IO) { progressDao.get(id) }
+                                if (saved != null && !saved.completed) connected.seekTo(saved.positionMs)
+                            }
+                            update(connected)
+                        }
+                    }
+                }
             }.onFailure {
                 stateMutable.value = stateMutable.value.copy(
                     status = PlaybackStatus.ERROR, error = "session_connection_failed",
@@ -77,6 +99,7 @@ class Media3PlaybackController @Inject constructor(
     override fun playQueue(items: List<PlaybackItem>, startIndex: Int) {
         require(items.isNotEmpty() && startIndex in items.indices)
         this.items = items
+        restored = false
         stateMutable.value = UnifiedPlaybackState(
             status = PlaybackStatus.PREPARING, currentItem = items[startIndex],
             queue = items, currentIndex = startIndex, playWhenReady = true,
@@ -101,6 +124,7 @@ class Media3PlaybackController @Inject constructor(
         pending = null
         withController { it.stop(); it.clearMediaItems() }
         items = emptyList()
+        restored = false
         stateMutable.value = UnifiedPlaybackState()
     }
     override fun seekTo(positionMs: Long) {
@@ -114,7 +138,7 @@ class Media3PlaybackController @Inject constructor(
     override fun setRepeatMode(repeatMode: Int) { withController { it.repeatMode = repeatMode } }
     override fun setShuffle(enabled: Boolean) { withController { it.shuffleModeEnabled = enabled } }
     override fun setSleepTimer(minutes: Int?) {
-        require(minutes == null || minutes in 1..180)
+        require(minutes == null || minutes == -1 || minutes in 1..180)
         withController {
             appContext.startService(Intent(appContext, UnifiedPlaybackService::class.java).apply {
                 action = UnifiedPlaybackService.ACTION_SLEEP_TIMER
@@ -132,7 +156,8 @@ class Media3PlaybackController @Inject constructor(
             player.playbackState == Player.STATE_ENDED -> PlaybackStatus.ENDED
             player.isPlaying -> PlaybackStatus.PLAYING
             player.playbackState == Player.STATE_READY -> PlaybackStatus.PAUSED
-            player.playbackState == Player.STATE_IDLE && item != null -> PlaybackStatus.PREPARING
+            player.playbackState == Player.STATE_IDLE && item != null ->
+                if (restored) PlaybackStatus.PAUSED else PlaybackStatus.PREPARING
             else -> PlaybackStatus.IDLE
         }
         stateMutable.value = stateMutable.value.copy(

@@ -13,6 +13,7 @@ import com.rateel.app.data.local.ListeningHistoryEntity
 import com.rateel.app.data.local.PlaybackProgressDao
 import com.rateel.app.data.local.PlaybackProgressEntity
 import com.rateel.app.domain.repository.RadioRepository
+import com.rateel.app.data.settings.AppSettings
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
 import kotlinx.coroutines.CoroutineScope
@@ -30,10 +31,12 @@ class UnifiedPlaybackService : MediaSessionService() {
     @Inject lateinit var progressDao: PlaybackProgressDao
     @Inject lateinit var historyDao: ListeningHistoryDao
     @Inject lateinit var radios: RadioRepository
+    @Inject lateinit var settings: AppSettings
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
     private var session: MediaSession? = null
     private var player: ExoPlayer? = null
     private var timer: Job? = null
+    private var pauseAtEnd = false
     private var previousId: String? = null
     private var previousLive = false
     private var previousPosition = 0L
@@ -55,9 +58,14 @@ class UnifiedPlaybackService : MediaSessionService() {
                 if (previousId != null && id != previousId && !previousLive)
                     persist(previousId!!, previousPosition, false)
                 if (id != null && id != previousId) {
+                    if (previousId != null && pauseAtEnd) {
+                        pauseAtEnd = false
+                        player.pause()
+                    }
                     retryJob?.cancel()
                     failover.reset()
                     previousId = id
+                    scope.launch { settings.setLastPlaybackItemId(id) }
                     previousLive = item.mediaMetadata.extras?.getBoolean("rateel.isLive") == true
                     previousPosition = 0
                     scope.launch(Dispatchers.IO) {
@@ -68,10 +76,18 @@ class UnifiedPlaybackService : MediaSessionService() {
                             sourceId = item.mediaMetadata.extras?.getString("rateel.sourceId")))
                     }
                 }
+                if (id == null && previousId != null) {
+                    previousId = null
+                    scope.launch { settings.setLastPlaybackItemId(null) }
+                }
                 if (id != null && !previousLive && player.currentPosition > 0) {
                     previousPosition = player.currentPosition
                     if (!player.isPlaying || player.playbackState == Player.STATE_ENDED)
                         persist(id, previousPosition, player.playbackState == Player.STATE_ENDED)
+                }
+                if (player.playbackState == Player.STATE_ENDED && pauseAtEnd) {
+                    pauseAtEnd = false
+                    player.pause()
                 }
             }
             override fun onPlayerError(error: androidx.media3.common.PlaybackException) {
@@ -121,6 +137,7 @@ class UnifiedPlaybackService : MediaSessionService() {
         if (intent?.action == ACTION_SLEEP_TIMER) {
             timer?.cancel()
             val minutes = intent.getIntExtra(EXTRA_MINUTES, 0)
+            pauseAtEnd = minutes == -1
             if (minutes in 1..180) timer = scope.launch {
                 delay(minutes * 60_000L)
                 player?.pause()

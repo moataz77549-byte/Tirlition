@@ -67,6 +67,7 @@ fun RadioDetailRoute(id: String, onBack: () -> Unit, vm: CatalogViewModel = hilt
     val validation by vm.streamValidation.collectAsStateWithLifecycle()
     val row = radios.firstOrNull { it.station.id == id }
     val recording by vm.recordingState.collectAsStateWithLifecycle()
+    val favoriteIds by vm.favoriteIds.collectAsStateWithLifecycle()
     var recordingDialog by remember { mutableStateOf(false) }
     if (recordingDialog) AlertDialog(onDismissRequest = { recordingDialog = false },
         title = { Text(stringResource(R.string.save_clip)) },
@@ -94,6 +95,9 @@ fun RadioDetailRoute(id: String, onBack: () -> Unit, vm: CatalogViewModel = hilt
                 Text("${stringResource(R.string.stream_status)}: ${validation?.health?.name ?: it.station.health.name}")
                 if (!it.capabilities.canRecord) Text(stringResource(R.string.recording_unavailable))
                 Button(onClick = { vm.playRadio(id) }) { Text(stringResource(R.string.play)) }
+                TextButton(onClick = { vm.toggleRadioFavorite(id) }) {
+                    Text(stringResource(if (id in favoriteIds) R.string.remove_favorite else R.string.add_favorite))
+                }
                 if (it.capabilities.canRecord) {
                     Button(onClick = { recordingDialog = true },
                         enabled = recording.status !in setOf(com.rateel.app.playback.RecordingStatus.PREPARING,

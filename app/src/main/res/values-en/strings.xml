@@ -44,6 +44,7 @@
     <string name="sleep_timer">Sleep timer</string>
     <string name="minutes_option">%1$d minutes</string>
     <string name="cancel_timer">Cancel timer</string>
+    <string name="end_of_surah">End of surah</string>
     <string name="recordings">Recordings</string>
     <string name="no_recordings">No local recordings yet.</string>
     <string name="recording_name">Recording name</string>
@@ -53,6 +54,8 @@
     <string name="delete_recording">Delete recording</string>
     <string name="recent_listening">Recent listening</string>
     <string name="favorites">Favorites</string>
+    <string name="add_favorite">Add to favorites</string>
+    <string name="remove_favorite">Remove from favorites</string>
     <string name="recording_active">Saving stream</string>
     <string name="stop_recording">Stop and save</string>
     <string name="save_clip">Save clip</string>

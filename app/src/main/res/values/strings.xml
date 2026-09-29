@@ -44,6 +44,7 @@
     <string name="sleep_timer">مؤقت النوم</string>
     <string name="minutes_option">%1$d دقائق</string>
     <string name="cancel_timer">إلغاء المؤقت</string>
+    <string name="end_of_surah">نهاية السورة</string>
     <string name="recordings">التسجيلات</string>
     <string name="no_recordings">لا توجد تسجيلات محلية.</string>
     <string name="recording_name">اسم التسجيل</string>
@@ -53,6 +54,8 @@
     <string name="delete_recording">حذف التسجيل</string>
     <string name="recent_listening">آخر الاستماع</string>
     <string name="favorites">المفضلة</string>
+    <string name="add_favorite">إضافة إلى المفضلة</string>
+    <string name="remove_favorite">إزالة من المفضلة</string>
     <string name="recording_active">جارٍ حفظ البث</string>
     <string name="stop_recording">إيقاف وحفظ</string>
     <string name="save_clip">حفظ مقطع</string>
