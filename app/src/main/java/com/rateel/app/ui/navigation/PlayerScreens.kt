@@ -105,10 +105,11 @@ fun FullPlayerRoute(onBack: () -> Unit, vm: PlayerViewModel = hiltViewModel()) {
         if (item != null) {
             Column(Modifier.fillMaxSize().padding(padding).padding(24.dp),
                 verticalArrangement = Arrangement.spacedBy(18.dp)) {
-                item.artwork?.let { artwork ->
-                    AsyncImage(model = artwork, contentDescription = null, modifier = Modifier.size(200.dp))
-                } ?: Icon(if (item.isLive) Icons.Outlined.Radio else Icons.Outlined.LibraryMusic,
-                    contentDescription = null, modifier = Modifier.size(160.dp))
+                if (item.artwork != null) {
+                    AsyncImage(model = item.artwork, contentDescription = null, modifier = Modifier.size(200.dp))
+                } else {
+                    Icon(if (item.isLive) Icons.Outlined.Radio else Icons.Outlined.LibraryMusic,
+                        contentDescription = null, modifier = Modifier.size(160.dp))
                 }
                 Text(item.title, style = MaterialTheme.typography.headlineMedium)
                 item.subtitle?.let { Text(it, style = MaterialTheme.typography.titleMedium) }
