@@ -7,7 +7,7 @@ This is a release gate, not a completion claim. `PARTIAL` does not pass. The can
 | 1 | Kotlin/Compose/Material 3/Navigation/Hilt/Room/DataStore/Retrofit/OkHttp | IMPLEMENTED | Existing app modules, DI, Room and repositories. |
 | 1 | minSdk 26, target/compile 36 | IMPLEMENTED | Gradle configuration; device compatibility remains untested. |
 | 1 | Database migrations | PARTIAL | Explicit 1→2, 2→3, 3→4 migrations; actual upgrade fixture/device test pending. |
-| 1 | CI/build/test/lint | PARTIAL | Existing main CI passed for stage 3; stage-4 sources require new CI and instrumented execution. |
+| 1 | CI/build/test/lint | PARTIAL | Branch CI run 36583913665 passed unit tests, instrumented-test compilation, lint, debug build and unsigned release assembly. Instrumented execution and device validation remain pending. |
 | 2 | Real MP3Quran catalog and rights gate | PARTIAL | Network adapters and fail-closed policies exist; current API/ten-radio/two-reciter playback matrix unverified. |
 | 2 | Live TV Makkah/Madinah | PARTIAL | Stage-3 status records live-TV API links as HTTP 404 on 2026-09-28. The catalog entry is disabled pending retest; do not claim a working official broadcast. |
 | 2 | Quran Foundation | NOT_APPLICABLE | Disabled until backend and resource-specific permission. |
@@ -32,3 +32,7 @@ This is a release gate, not a completion claim. `PARTIAL` does not pass. The can
 5. A full visual/accessibility/security/release smoke test is still pending.
 
 No beta tag or release may be created while these remain open.
+
+## CI evidence
+
+The latest verified branch source before this audit-note update was `373dfdf442b43a3c71ea1bd9ac84013461cc8276`; Android CI run [36583913665](https://github.com/moataz77549-byte/Tirlition/actions/runs/36583913665) passed on 2026-09-29. Its `assembleRelease` output was unsigned and was neither published nor installed. This result proves compilation and packaging only.
