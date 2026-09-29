@@ -60,3 +60,6 @@ This GitHub repository is the single source of truth. Official builds/releases m
 One Media3 ExoPlayer in MediaSessionService plays MP3/AAC radios, HLS when the endpoint is valid, remote surahs and local recordings. MediaSession provides Android media controls in the foreground/background; the UI has a mini and full player. Room stores non-live progress and recent listening. The app does not automatically start audio on launch. Radio reconnect/failover uses finite retries and resolves endpoints from the repository. The implementation still needs device validation and process restoration.
 
 The recorder boundary accepts only progressive MP3/AAC from a verified source and host with explicit recording rights; HLS recording is unsupported. Current catalog sources do not grant recording, so the production UI intentionally omits recording. See PLAYBACK_ARCHITECTURE.md and RECORDING_ARCHITECTURE.md.
+
+## Offline audio development
+The stage-4 branch adds rights-gated, app-private audio downloads, a Wi-Fi-only preference, and local-first playback in the existing Media3 engine. Downloads remain subject to device and CI verification. No final APK or release is produced at this stage.

@@ -83,3 +83,6 @@ Saudi Quran radio, Makkah Quran broadcasts, Madinah/Sunnah broadcasts, and other
 7. Recording means saving stream bytes, never microphone capture.
 8. Provider-rights changes require updating this registry and runtime policy before enabling new behavior.
 9. `ContentCapabilityResolver` intersects source permissions with the actual asset host and live-channel type. A third-party asset never inherits MP3Quran's download/offline grant merely because the API returned its URL.
+
+## Stage-4 download gate
+The current MP3Quran v3 catalog grants direct progressive audio download and local listening only when the asset host is MP3Quran-owned. Attribution remains MP3Quran.net. Qurango radio, MP3Quran live TV and Quran Foundation audio cannot enter the download queue. Recording and sharing are separate capabilities and remain disabled for those assets. An API link or reachable URL is never itself permission. See the provider's published policy and verify rights changes before enabling new sources.

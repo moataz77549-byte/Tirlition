@@ -1,0 +1,9 @@
+# Audio downloads (stage 4, in progress)
+
+The existing catalog owns source, mushaf and track metadata. `RateelDownloadManager` checks the latest stored `ContentSource` through `ContentCapabilityResolver` before queuing. `AudioDownloadWorker` checks again before transfer. Only progressive MP3/AAC from a known allowed asset host can pass; a stream URL alone conveys no permission. MP3Quran is currently the only enabled source with download and offline rights. Quran Foundation is disabled; live and third-party streams remain streaming only.
+
+Room `downloads` is the durable state source. A unique `contentId` prevents duplicates, with a unique WorkManager name per item. WorkManager constraints use `UNMETERED` when the DataStore Wi-Fi-only preference is enabled. Transfers are bounded to two in-process workers. A foreground notification reports progress. Android 16 may apply job runtime quotas to long-running workers, so large mushaf jobs require device verification and may be rescheduled by the system.
+
+The worker streams into a `.part` file with a 64 KiB buffer. It requests HTTP Range only for an existing part; it appends only after a matching 206 Content-Range and validators. A 200 response restarts from zero. A rejected range fails safely. It validates nonzero size, known length, plausible audio header and SHA-256 if supplied; then renames in the same directory and records `COMPLETED`. This does not constitute full decoder validation. Only a completed, existing, nonexpired local URI is offered to the existing Media3 queue. The stable track ID preserves playback progress.
+
+The UI currently groups rows by mushaf ID and supports track selection, batch enqueue, pause, resume, cancel and deletion. Further device validation is needed for user-facing completion, connectivity transitions, notification actions, low storage and database upgrade. No final release is made in stage 4.
