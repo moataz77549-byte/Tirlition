@@ -18,7 +18,7 @@ class OfflineMediaStore @Inject constructor(@ApplicationContext private val cont
     }
     fun file(source: String, reciter: String, mushaf: String, surah: Int, format: String?): File {
         require(surah in 1..114)
-        val extension = when (format?.lowercase()) { "aac", "m4a" -> "m4a"; else -> "mp3" }
+        val extension = when (format?.lowercase()) { "aac" -> "aac"; "m4a" -> "m4a"; else -> "mp3" }
         val dir = File(root, "${safe(source)}/${safe(reciter)}/${safe(mushaf)}").apply { mkdirs() }
         return File(dir, "%03d.%s".format(surah, extension))
     }

@@ -217,7 +217,7 @@ fun SurahsRoute(id: String, onBack: () -> Unit, onSurah: (String) -> Unit,
             ListItem(headlineContent = { Text("${track.surahNumber}. ${track.surahNameArabic}") },
                 supportingContent = { Text("${track.sourceId} · ${downloads.firstOrNull { it.contentId == track.id }?.status ?: ""}") },
                 trailingContent = { if (track.sourceId in eligible)
-                    Checkbox(selected = track.id in selected, onCheckedChange = { checked -> selected = if (checked) selected + track.id else selected - track.id }) },
+                    Checkbox(checked = track.id in selected, onCheckedChange = { checked -> selected = if (checked) selected + track.id else selected - track.id }) },
                 modifier = Modifier.fillMaxWidth().clickable { onSurah(track.id) })
         }
     }

@@ -19,7 +19,7 @@ This is a release gate, not a completion claim. `PARTIAL` does not pass. The can
 | 4 | Pause/resume/cancel/retry | PARTIAL | Unique work, HTTP Range/If-Range path, cancellation state; network/ETag/race tests pending. |
 | 4 | Mushaf batch, Wi-Fi preference, concurrency | PARTIAL | Available track list, UNMETERED constraint, process-local semaphore(2); queued state and long-running Android limits require device tests. |
 | 4 | Offline playback/library/storage management | PARTIAL | Local-first playback and basic downloads UI; full storage/cache dashboard, partial library details and safe playback-during-delete need work. |
-| 5 | Identity, API 26/modern/arm64 install, signed APK | NOT_IMPLEMENTED | No verified identity package, emulator/device matrix, signing material, release APK or install test yet. |
+| 5 | Identity, API 26/modern/arm64 install, signed APK | PARTIAL | Original adaptive/monochrome icon and compat splash added on the branch; mask and device checks, signing, release APK and install test remain. |
 | 5 | Tag/GitHub prerelease | NOT_IMPLEMENTED | Intentionally blocked by all preceding PARTIAL requirements. |
 
 ## Release blockers
