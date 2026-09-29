@@ -13,6 +13,9 @@ import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.foundation.layout.Column
+import androidx.hilt.navigation.compose.hiltViewModel
+import com.rateel.app.feature.player.PlayerViewModel
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
@@ -40,6 +43,7 @@ enum class Destination(
 
 @Composable
 fun RateelApp() {
+    val playerViewModel: PlayerViewModel = hiltViewModel()
     val navController = rememberNavController()
     val backStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = backStackEntry?.destination?.route
@@ -47,7 +51,11 @@ fun RateelApp() {
 
     Scaffold(
         bottomBar = {
-            if (currentRoute !in secondaryRoutes && currentRoute?.startsWith("reciter/") != true &&
+            Column {
+            if (currentRoute != "player") {
+                MiniPlayer(onOpen = { navController.navigate("player") }, vm = playerViewModel)
+            }
+            if (currentRoute !in secondaryRoutes && currentRoute != "player" && currentRoute?.startsWith("reciter/") != true &&
                 currentRoute?.startsWith("mushaf/") != true && currentRoute?.startsWith("radio/") != true &&
                 currentRoute?.startsWith("surah/") != true) {
                 NavigationBar {
@@ -73,6 +81,7 @@ fun RateelApp() {
                         )
                     }
                 }
+            }
             }
         },
     ) { padding ->
@@ -117,12 +126,15 @@ fun RateelApp() {
                 )
             }
             composable(Destination.DOWNLOADS.route) { Placeholder(R.string.downloads) }
-            composable(Destination.LIBRARY.route) { Placeholder(R.string.library) }
+            composable(Destination.LIBRARY.route) { LibraryRoute() }
             composable("settings") {
                 SettingsRoute(onSources = { navController.navigate("sources-rights") })
             }
             composable("sources-rights") {
                 SourcesAndRightsRoute(onBack = { navController.popBackStack() })
+            }
+            composable("player") {
+                FullPlayerRoute(onBack = { navController.popBackStack() }, vm = playerViewModel)
             }
         }
     }

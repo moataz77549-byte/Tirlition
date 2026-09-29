@@ -167,7 +167,14 @@ data class SurahMetadataEntity(
 data class FavoriteEntity(@PrimaryKey(autoGenerate = true) val id: Long = 0, val contentType: String, val contentId: String, val createdAt: Long)
 
 @Entity(tableName = "listening_history", indices = [Index("contentId")])
-data class ListeningHistoryEntity(@PrimaryKey(autoGenerate = true) val id: Long = 0, val contentType: String, val contentId: String, val playedAt: Long, val positionMs: Long = 0)
+data class ListeningHistoryEntity(
+    @PrimaryKey(autoGenerate = true) val id: Long = 0,
+    val contentType: String, val contentId: String, val playedAt: Long, val positionMs: Long = 0,
+    @ColumnInfo(defaultValue = "''") val titleSnapshot: String = "",
+    val sourceId: String? = null,
+    @ColumnInfo(defaultValue = "0") val playedDurationMs: Long = 0,
+    @ColumnInfo(defaultValue = "0") val completed: Boolean = false,
+)
 
 @Entity(
     tableName = "downloads",
@@ -194,7 +201,10 @@ data class DownloadEntity(
 )
 
 @Entity(tableName = "playback_progress")
-data class PlaybackProgressEntity(@PrimaryKey val contentId: String, val positionMs: Long, val durationMs: Long?, val updatedAt: Long)
+data class PlaybackProgressEntity(
+    @PrimaryKey val contentId: String, val positionMs: Long, val durationMs: Long?, val updatedAt: Long,
+    @ColumnInfo(defaultValue = "0") val completed: Boolean = false,
+)
 
 @Entity(tableName = "cache_metadata")
 data class CacheMetadataEntity(@PrimaryKey val key: String, val updatedAt: Long, val expiresAt: Long?)
@@ -224,4 +234,7 @@ data class LocalRecordingEntity(
     val artwork: String?,
     val sourceAttribution: String?,
     val createdAt: Long,
+    @ColumnInfo(defaultValue = "''") val rightsSnapshot: String = "",
+    @ColumnInfo(defaultValue = "1") val isComplete: Boolean = true,
+    val codec: String? = null,
 )

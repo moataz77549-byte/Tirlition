@@ -1,49 +1,74 @@
 package com.rateel.app.playback
 
+import com.rateel.app.domain.model.ContentAsset
+import com.rateel.app.domain.model.ContentCapabilityResolver
 import com.rateel.app.domain.model.ContentSource
-import com.rateel.app.domain.model.RightsAction
-import com.rateel.app.domain.model.SourceRightsPolicy
 import com.rateel.app.domain.model.StreamEndpoint
+import java.net.URI
+import kotlinx.coroutines.flow.StateFlow
 
 enum class RecordingMode { MANUAL, FIXED_DURATION }
-
 data class RecordingRequest(
     val stationId: String,
-    val source: ContentSource,
+    val stationName: String,
     val endpoint: StreamEndpoint,
     val mode: RecordingMode,
     val requestedDurationMs: Long? = null,
 )
-
 sealed interface RecordingCapability {
     data object Supported : RecordingCapability
     data class Unsupported(val reason: String) : RecordingCapability
 }
-
-object RecordingDurations {
-    val supportedMinutes = listOf(5, 10, 15, 30)
-}
-
-/**
- * Future stream recorder boundary. Implementations save network stream bytes and never capture
- * microphone audio. Unsupported formats remain playable; only recording is denied.
- */
+enum class RecordingStatus { IDLE, PREPARING, RECORDING, FINALIZING, COMPLETED, FAILED, CANCELLED }
+data class RecordingState(
+    val status: RecordingStatus = RecordingStatus.IDLE,
+    val stationId: String? = null,
+    val elapsedMs: Long = 0,
+    val targetMs: Long? = null,
+    val bytesWritten: Long = 0,
+    val outputId: String? = null,
+    val error: String? = null,
+)
 interface StreamRecorder {
-    fun capability(endpoint: StreamEndpoint): RecordingCapability
+    val state: StateFlow<RecordingState>
     suspend fun start(request: RecordingRequest): Result<String>
     suspend fun stop(): Result<Unit>
+    suspend fun cancel(): Result<Unit>
 }
-
+object RecordingDurations { val supportedMinutes = listOf(5, 10, 15, 30) }
 object StreamRecordingPolicy {
     fun canRecord(source: ContentSource, endpoint: StreamEndpoint): RecordingCapability {
-        val rights = SourceRightsPolicy.evaluate(source, RightsAction.RECORD)
-        if (!rights.allowed) return RecordingCapability.Unsupported(rights.reason ?: "rights_denied")
-
-        val supported = when (endpoint.format?.lowercase()) {
-            "mp3", "aac", "aac+", "hls", "m3u8" -> true
-            else -> false
+        val host = runCatching { URI(endpoint.url).host?.lowercase() }.getOrNull()
+        val rights = ContentCapabilityResolver.resolve(source,
+            ContentAsset(endpoint.sourceId, host, source.id))
+        if (!rights.canRecord) return RecordingCapability.Unsupported("rights_denied")
+        if (!endpoint.url.startsWith("https://")) return RecordingCapability.Unsupported("https_required")
+        return when (endpoint.format?.lowercase()) {
+            "mp3", "aac", "aac+", null -> RecordingCapability.Supported
+            else -> RecordingCapability.Unsupported("unsupported_stream_format")
         }
-        return if (supported) RecordingCapability.Supported
-        else RecordingCapability.Unsupported("unsupported_stream_format")
+    }
+}
+object RecordingFileNames {
+    fun create(stationId: String, timestamp: Long, extension: String): String {
+        val safe = stationId.replace(Regex("[^a-zA-Z0-9_-]"), "_").take(60)
+        require(extension == "mp3" || extension == "aac")
+        return "rateel_recording_${safe}_${timestamp}.$extension"
+    }
+}
+
+object ProgressiveAudioFormat {
+    fun resolve(declared: String?, contentType: String?): String? {
+        val header = contentType.orEmpty().substringBefore(';').trim().lowercase()
+        return when {
+            header == "audio/mpeg" || header == "audio/mp3" -> "mp3"
+            header == "audio/aac" || header == "audio/aacp" || header == "audio/x-aac" -> "aac"
+            header.isEmpty() || header == "application/octet-stream" -> when (declared?.lowercase()) {
+                "mp3" -> "mp3"
+                "aac", "aac+" -> "aac"
+                else -> null
+            }
+            else -> null
+        }
     }
 }

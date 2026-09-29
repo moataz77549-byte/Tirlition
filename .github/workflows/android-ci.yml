@@ -26,3 +26,5 @@ jobs:
         run: gradle lintDebug --stacktrace
       - name: Build debug
         run: gradle assembleDebug --stacktrace
+      - name: Compile release sources
+        run: gradle compileReleaseKotlin --stacktrace

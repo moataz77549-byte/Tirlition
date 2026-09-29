@@ -15,6 +15,10 @@ import com.rateel.app.data.local.ReciterDao
 import com.rateel.app.data.local.SourceDao
 import com.rateel.app.data.local.SurahMetadataDao
 import com.rateel.app.data.local.CacheMetadataDao
+import com.rateel.app.data.local.PlaybackProgressDao
+import com.rateel.app.data.local.ListeningHistoryDao
+import com.rateel.app.data.local.FavoriteDao
+import com.rateel.app.data.local.RecordingDao
 import com.rateel.app.data.remote.Mp3QuranV3DataSource
 import com.rateel.app.data.remote.QuranAudioRemoteDataSource
 import com.rateel.app.data.remote.RadioRemoteDataSource
@@ -29,6 +33,10 @@ import com.rateel.app.domain.repository.MushafRepository
 import com.rateel.app.domain.repository.RadioRepository
 import com.rateel.app.domain.repository.ReciterRepository
 import com.rateel.app.domain.repository.SourceRepository
+import com.rateel.app.playback.PlaybackController
+import com.rateel.app.playback.Media3PlaybackController
+import com.rateel.app.playback.StreamRecorder
+import com.rateel.app.playback.ProgressiveStreamRecorder
 import dagger.Binds
 import dagger.Module
 import dagger.Provides
@@ -62,6 +70,10 @@ object AppModule {
     @Provides fun audioTrackDao(db: RateelDatabase): AudioTrackDao = db.audioTrackDao()
     @Provides fun surahMetadataDao(db: RateelDatabase): SurahMetadataDao = db.surahMetadataDao()
     @Provides fun cacheMetadataDao(db: RateelDatabase): CacheMetadataDao = db.cacheMetadataDao()
+    @Provides fun playbackProgressDao(db: RateelDatabase): PlaybackProgressDao = db.playbackProgressDao()
+    @Provides fun listeningHistoryDao(db: RateelDatabase): ListeningHistoryDao = db.listeningHistoryDao()
+    @Provides fun favoriteDao(db: RateelDatabase): FavoriteDao = db.favoriteDao()
+    @Provides fun recordingDao(db: RateelDatabase): RecordingDao = db.recordingDao()
 
     @Provides
     @Singleton
@@ -114,4 +126,6 @@ abstract class BindingsModule {
     @Binds abstract fun bindReciterRepository(impl: OfflineReciterRepository): ReciterRepository
     @Binds abstract fun bindMushafRepository(impl: LocalMushafRepository): MushafRepository
     @Binds abstract fun bindAudioRepository(impl: LocalAudioRepository): AudioRepository
+    @Binds abstract fun bindPlaybackController(impl: Media3PlaybackController): PlaybackController
+    @Binds @Singleton abstract fun bindStreamRecorder(impl: ProgressiveStreamRecorder): StreamRecorder
 }
