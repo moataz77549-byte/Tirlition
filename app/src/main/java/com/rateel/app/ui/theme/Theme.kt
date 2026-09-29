@@ -7,49 +7,43 @@ import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.dp
 import com.rateel.app.data.settings.ThemeMode
 
 private val LightColors = lightColorScheme(
-    primary = Color(0xFF1E5144),
-    onPrimary = Color(0xFFFFFFFF),
-    primaryContainer = Color(0xFFD2E8E0),
-    onPrimaryContainer = Color(0xFF00201A),
-    secondary = Color(0xFF4A635B),
-    onSecondary = Color(0xFFFFFFFF),
-    secondaryContainer = Color(0xFFCCE8DF),
-    onSecondaryContainer = Color(0xFF062019),
-    tertiary = Color(0xFF8F6E31),
-    onTertiary = Color(0xFFFFFFFF),
-    tertiaryContainer = Color(0xFFF9E0AE),
-    onTertiaryContainer = Color(0xFF2A1B00),
-    background = Color(0xFFFBF9F5),
-    onBackground = Color(0xFF191C1B),
-    surface = Color(0xFFFFFFFF),
-    onSurface = Color(0xFF191C1B),
-    surfaceVariant = Color(0xFFDBE5E0),
-    onSurfaceVariant = Color(0xFF3F4946),
+    primary = Color(0xFF145C55),
+    onPrimary = Color.White,
+    primaryContainer = Color(0xFFD1EDE6),
+    onPrimaryContainer = Color(0xFF073B36),
+    secondary = Color(0xFF58635F),
+    secondaryContainer = Color(0xFFDEEAE4),
+    tertiary = Color(0xFF80602C),
+    tertiaryContainer = Color(0xFFF9E2B2),
+    background = Color(0xFFFAF9F5),
+    surface = Color(0xFFFAF9F5),
+    surfaceVariant = Color(0xFFE6EAE5),
+    onSurface = Color(0xFF1A2421),
+    outlineVariant = Color(0xFFC1CAC4),
 )
 
 private val DarkColors = darkColorScheme(
-    primary = Color(0xFF82D5C0),
-    onPrimary = Color(0xFF00382E),
-    primaryContainer = Color(0xFF005143),
-    onPrimaryContainer = Color(0xFF9FF2DC),
-    secondary = Color(0xFFB0CCC3),
-    onSecondary = Color(0xFF1B352E),
-    secondaryContainer = Color(0xFF324B44),
-    onSecondaryContainer = Color(0xFFCCE8DF),
-    tertiary = Color(0xFFDFC48B),
-    onTertiary = Color(0xFF3E2E00),
-    tertiaryContainer = Color(0xFF5A440F),
-    onTertiaryContainer = Color(0xFFFDE0A4),
-    background = Color(0xFF111715),
-    onBackground = Color(0xFFE0E3E1),
-    surface = Color(0xFF171F1C),
-    onSurface = Color(0xFFE0E3E1),
-    surfaceVariant = Color(0xFF3F4946),
-    onSurfaceVariant = Color(0xFFBFC9C4),
+    primary = Color(0xFF9FCFC5),
+    secondary = Color(0xFFC2C8C5),
+    tertiary = Color(0xFFE6C18B),
+    background = Color(0xFF111A19),
+    surface = Color(0xFF111A19),
+    surfaceVariant = Color(0xFF394743),
+    onSurface = Color(0xFFE0EAE5),
+    primaryContainer = Color(0xFF174C46),
+    onPrimaryContainer = Color(0xFFD1EDE6),
+    outlineVariant = Color(0xFF414F4A),
 )
+
+object RateelSpacing {
+    val small = 8.dp
+    val medium = 16.dp
+    val large = 24.dp
+}
 
 @Composable
 fun RateelTheme(

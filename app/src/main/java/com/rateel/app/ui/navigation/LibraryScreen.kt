@@ -31,7 +31,8 @@ import java.util.Date
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun LibraryRoute(onSurah: (String) -> Unit = {}, vm: LibraryViewModel = hiltViewModel()) {
+fun LibraryRoute(onSurah: (String) -> Unit = {}, onRadio: (String) -> Unit = {},
+    vm: LibraryViewModel = hiltViewModel()) {
     val context = LocalContext.current
     val recordings by vm.recordings.collectAsStateWithLifecycle()
     val history by vm.history.collectAsStateWithLifecycle()
@@ -264,6 +265,12 @@ fun LibraryRoute(onSurah: (String) -> Unit = {}, vm: LibraryViewModel = hiltView
                                 ListItem(
                                     headlineContent = { Text(entry.contentId) },
                                     supportingContent = { Text(entry.contentType) },
+                                    modifier = Modifier.fillMaxWidth().clickable {
+                                        when (entry.contentType) {
+                                            "radio" -> onRadio(entry.contentId)
+                                            "surah" -> onSurah(entry.contentId)
+                                        }
+                                    },
                                     trailingContent = {
                                         IconButton(onClick = { vm.removeFavorite(entry.contentType, entry.contentId) }) {
                                             Icon(Icons.Outlined.Delete, contentDescription = stringResource(R.string.remove))

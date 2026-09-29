@@ -69,25 +69,34 @@ class Mp3QuranV3DataSource @Inject constructor(
     private val client: OkHttpClient,
 ) : RadioRemoteDataSource, ReciterRemoteDataSource, QuranAudioRemoteDataSource {
     private val json = Json { ignoreUnknownKeys = true; coerceInputValues = true }
-    private val base = "https://www.mp3quran.net/api/v3/"
+    // Both origins appear in the provider's v3 documentation. The canonical host is
+    // tried first; the documented www host is a bounded fallback for connection errors.
+    private val origins = listOf("https://mp3quran.net/api/v3/", "https://www.mp3quran.net/api/v3/")
     private var cachedReciters: Mp3QuranRecitersResponse? = null
     private var cachedSuwar: Mp3QuranSuwarResponse? = null
     private var cachedRiwayat: Mp3QuranRiwayatResponse? = null
 
     private suspend inline fun <reified T> load(path: String): AppResult<T> = withContext(Dispatchers.IO) {
-        try {
-            client.newCall(Request.Builder().url(base + path).build()).execute().use { response ->
-                if (!response.isSuccessful) return@withContext AppResult.Error.Server
-                val body = response.body?.string() ?: return@withContext AppResult.Error.Parsing
-                AppResult.Success(json.decodeFromString<T>(body))
+        var lastError: AppResult.Error = AppResult.Error.Network
+        for (origin in origins) {
+            try {
+                client.newCall(Request.Builder().url(origin + path).build()).execute().use { response ->
+                    if (!response.isSuccessful) {
+                        lastError = AppResult.Error.Server
+                    } else {
+                        val body = response.body?.string() ?: return@withContext AppResult.Error.Parsing
+                        return@withContext AppResult.Success(json.decodeFromString<T>(body))
+                    }
+                }
+            } catch (_: SocketTimeoutException) {
+                lastError = AppResult.Error.Timeout
+            } catch (_: IOException) {
+                lastError = AppResult.Error.Network
+            } catch (_: kotlinx.serialization.SerializationException) {
+                return@withContext AppResult.Error.Parsing
             }
-        } catch (_: SocketTimeoutException) {
-            AppResult.Error.Timeout
-        } catch (_: IOException) {
-            AppResult.Error.Network
-        } catch (_: kotlinx.serialization.SerializationException) {
-            AppResult.Error.Parsing
         }
+        lastError
     }
 
     suspend fun languages(): AppResult<List<Mp3QuranLanguageDto>> =

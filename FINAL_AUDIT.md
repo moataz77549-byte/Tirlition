@@ -12,16 +12,16 @@ This is a release gate, not a completion claim. `PARTIAL` does not pass. The can
 | 2 | Live TV Makkah/Madinah | PARTIAL | Stage-3 status records live-TV API links as HTTP 404 on 2026-09-28. The catalog entry is disabled pending retest; do not claim a working official broadcast. |
 | 2 | Quran Foundation | NOT_APPLICABLE | Disabled until backend and resource-specific permission. |
 | 2 | Fake data in production | IMPLEMENTED | Fake repositories under `src/debug` only; production source uses remote adapters and Room. |
-| 3 | Unified Media3 service/controller and UI | IMPLEMENTED | Single ExoPlayer, MediaSessionService, mini/full UI, playback speed (0.75x–2.0x), repeat modes (off, surah, all), and queue failover. |
-| 3 | Rights-gated recording | IMPLEMENTED | Recorder and domain guard present with FileProvider export/sharing and rename/delete capability. |
-| 3 | Playback queue/resume/history/favorites | IMPLEMENTED | Playback queue, history logging, clear history, favorites management, and local/remote stream resolution. |
-| 4 | Rights-gated progressive track download | IMPLEMENTED | WorkManager worker, Room metadata, .part file atomic rename, and checksum/header validation. |
-| 4 | Pause/resume/cancel/retry | IMPLEMENTED | Unique work, HTTP Range/If-Range path, and retry with cancellation handling. |
-| 4 | Mushaf batch, Wi-Fi preference, concurrency | IMPLEMENTED | Available track list, UNMETERED constraint switch, process-local semaphore(2). |
-| 4 | Offline playback/library/storage management | IMPLEMENTED | Local-first playback, storage usage breakdown, and safe bulk deletion guarding active playback. |
-| 5 | Search, Home, library and settings | IMPLEMENTED | Radio/reciter search with Arabic normalization, 4-tab Library (Downloads, Recordings, History, Favorites), recording sharing via FileProvider, clear history/favorites, and theme switcher. |
-| 5 | Identity, API 26/modern/arm64 install, signed APK | IMPLEMENTED | Multi-ABI split (arm64-v8a, armeabi-v7a, x86_64, universal), network security config, and splash. |
-| 5 | Tag/GitHub prerelease | PENDING | Ready for CI compilation, smoke testing, and release tagging. |
+| 3 | Unified Media3 service/controller and UI | PARTIAL | Single ExoPlayer, MediaSessionService, mini/full UI in code; no device notification/lock/Bluetooth/background acceptance run. |
+| 3 | Rights-gated recording | PARTIAL | Recorder and domain guard present; no currently authorized production station (`canRecord=false`). Cannot satisfy actual recording acceptance without rights. |
+| 3 | Playback queue/resume/history/favorites | PARTIAL | Code and unit tests; offline/device/process death checks pending. |
+| 4 | Rights-gated progressive track download | PARTIAL | WorkManager worker, Room metadata, .part and checksum/header validation proposed on this branch; CI and real transfer pending. |
+| 4 | Pause/resume/cancel/retry | PARTIAL | Unique work, HTTP Range/If-Range path, cancellation state; network/ETag/race tests pending. |
+| 4 | Mushaf batch, Wi-Fi preference, concurrency | PARTIAL | Available track list, UNMETERED constraint, process-local semaphore(2); queued state and long-running Android limits require device tests. |
+| 4 | Offline playback/library/storage management | PARTIAL | Local-first playback and basic downloads UI; full storage/cache dashboard, partial library details and safe playback-during-delete need work. |
+| 5 | Search, Home, library and settings | PARTIAL | Radio/reciter search and navigable featured cards; downloaded entries, recordings, favorites/history and About exist. Complete usability, continue listening and actual device inspection pending. |
+| 5 | Identity, API 26/modern/arm64 install, signed APK | PARTIAL | Original adaptive/monochrome icon and compat splash added on the branch; mask and device checks, signing, release APK and install test remain. |
+| 5 | Tag/GitHub prerelease | NOT_IMPLEMENTED | Intentionally blocked by all preceding PARTIAL requirements. |
 
 ## Release blockers
 

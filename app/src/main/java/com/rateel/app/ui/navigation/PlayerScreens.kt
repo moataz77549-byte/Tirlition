@@ -1,6 +1,8 @@
 package com.rateel.app.ui.navigation
 
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowBack
@@ -18,6 +20,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -32,6 +35,8 @@ import coil3.compose.AsyncImage
 fun MiniPlayer(onOpen: () -> Unit, vm: PlayerViewModel) {
     val state by vm.state.collectAsStateWithLifecycle()
     val item = state.currentItem ?: return
+    Card(Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 4.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer)) {
     Column {
         if (!item.isLive && state.durationMs != null) {
             LinearProgressIndicator(
@@ -57,6 +62,7 @@ fun MiniPlayer(onOpen: () -> Unit, vm: PlayerViewModel) {
             },
         )
     }
+    }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -67,21 +73,21 @@ fun FullPlayerRoute(onBack: () -> Unit, vm: PlayerViewModel = hiltViewModel()) {
     val item = state.currentItem
     var timerDialog by remember { mutableStateOf(false) }
     var recordingDialog by remember { mutableStateOf(false) }
+    var sourceDialog by remember { mutableStateOf(false) }
     var speedDialog by remember { mutableStateOf(false) }
     if (speedDialog) AlertDialog(
         onDismissRequest = { speedDialog = false },
         title = { Text(stringResource(R.string.playback_speed)) },
-        text = {
-            Column {
-                listOf(0.75f, 1.0f, 1.25f, 1.5f, 1.75f, 2.0f).forEach { speed ->
-                    TextButton(onClick = { vm.setPlaybackSpeed(speed); speedDialog = false }) {
-                        Text("${speed}x")
-                    }
-                }
-            }
-        },
+        text = { Column { listOf(0.75f, 1f, 1.25f, 1.5f, 1.75f, 2f).forEach { speed ->
+            TextButton(onClick = { vm.setPlaybackSpeed(speed); speedDialog = false }) {
+                Text("${speed}x") }
+        } } },
         confirmButton = {},
     )
+    if (sourceDialog && item != null) AlertDialog(onDismissRequest = { sourceDialog = false },
+        title = { Text(stringResource(R.string.content_info)) },
+        text = { Text(stringResource(R.string.source_info, sourceDisplayName(item.sourceId))) },
+        confirmButton = { TextButton(onClick = { sourceDialog = false }) { Text(stringResource(R.string.back)) } })
     if (recordingDialog) AlertDialog(onDismissRequest = { recordingDialog = false },
         title = { Text(stringResource(R.string.save_clip)) },
         text = { Column {
@@ -118,8 +124,9 @@ fun FullPlayerRoute(onBack: () -> Unit, vm: PlayerViewModel = hiltViewModel()) {
             Icon(Icons.AutoMirrored.Outlined.ArrowBack, contentDescription = stringResource(R.string.back))
         } }) }) { padding ->
         if (item != null) {
-            Column(Modifier.fillMaxSize().padding(padding).padding(24.dp),
-                verticalArrangement = Arrangement.spacedBy(18.dp)) {
+            Column(Modifier.fillMaxSize().padding(padding).verticalScroll(rememberScrollState())
+                .padding(20.dp), horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(16.dp)) {
                 if (item.artwork != null) {
                     AsyncImage(model = item.artwork, contentDescription = null, modifier = Modifier.size(200.dp))
                 } else {
@@ -144,42 +151,41 @@ fun FullPlayerRoute(onBack: () -> Unit, vm: PlayerViewModel = hiltViewModel()) {
                     )
                     Text("${formatTime(state.positionMs)} / ${formatTime(state.durationMs!!)}")
                 }
-                Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                Row(horizontalArrangement = Arrangement.spacedBy(16.dp),
+                    verticalAlignment = Alignment.CenterVertically) {
                     IconButton(onClick = vm::previous, enabled = state.currentIndex > 0) {
-                        Icon(Icons.Outlined.SkipPrevious, contentDescription = stringResource(R.string.back))
+                        Icon(Icons.Outlined.SkipPrevious, contentDescription = stringResource(R.string.previous_track))
                     }
-                    IconButton(onClick = vm::toggle) {
+                    FilledIconButton(onClick = vm::toggle, modifier = Modifier.size(64.dp)) {
                         Icon(if (state.status == PlaybackStatus.PLAYING) Icons.Outlined.Pause else Icons.Outlined.PlayArrow,
-                            contentDescription = stringResource(if (state.status == PlaybackStatus.PLAYING) R.string.pause else R.string.play))
+                            contentDescription = stringResource(if (state.status == PlaybackStatus.PLAYING) R.string.pause else R.string.play),
+                            modifier = Modifier.size(32.dp))
                     }
                     IconButton(onClick = vm::next, enabled = state.currentIndex < state.queue.lastIndex) {
-                        Icon(Icons.Outlined.SkipNext, contentDescription = stringResource(R.string.player))
+                        Icon(Icons.Outlined.SkipNext, contentDescription = stringResource(R.string.next_track))
                     }
                     IconButton(onClick = vm::stop) {
                         Icon(Icons.Outlined.Stop, contentDescription = stringResource(R.string.stop))
                     }
                 }
-                if (!item.isLive) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
-                    ) {
-                        TextButton(onClick = { speedDialog = true }) {
-                            Text("${stringResource(R.string.playback_speed)}: ${state.playbackSpeed}x")
-                        }
-                        TextButton(onClick = vm::toggleRepeatMode) {
-                            val repeatLabel = when (state.repeatMode) {
-                                1 -> stringResource(R.string.repeat_one)
-                                2 -> stringResource(R.string.repeat_all)
-                                else -> stringResource(R.string.repeat_off)
-                            }
-                            Text("${stringResource(R.string.repeat_mode)}: $repeatLabel")
-                        }
-                    }
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    TextButton(onClick = { timerDialog = true }) { Text(stringResource(R.string.sleep_timer)) }
+                    TextButton(onClick = { sourceDialog = true }) { Text(stringResource(R.string.content_info)) }
                 }
-                Text("${stringResource(R.string.sources_and_rights)}: ${item.sourceId}")
-                TextButton(onClick = { timerDialog = true }) { Text(stringResource(R.string.sleep_timer)) }
+                if (!item.isLive) Row(Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween) {
+                    TextButton(onClick = { speedDialog = true }) {
+                        Text("${stringResource(R.string.playback_speed)}: ${state.playbackSpeed}x") }
+                    TextButton(onClick = vm::toggleRepeatMode) {
+                        Text("${stringResource(R.string.repeat_mode)}: " + stringResource(when (state.repeatMode) {
+                            1 -> R.string.repeat_one
+                            2 -> R.string.repeat_all
+                            else -> R.string.repeat_off
+                        })) }
+                }
+                if (item.capabilities.requiresAttribution)
+                    Text(stringResource(R.string.source_info, sourceDisplayName(item.sourceId)),
+                        style = MaterialTheme.typography.labelSmall)
                 if (item.isLive && item.capabilities.canRecord &&
                     recording.status !in setOf(RecordingStatus.PREPARING,
                         RecordingStatus.RECORDING, RecordingStatus.FINALIZING)) {
@@ -210,4 +216,11 @@ fun FullPlayerRoute(onBack: () -> Unit, vm: PlayerViewModel = hiltViewModel()) {
 private fun formatTime(ms: Long): String {
     val seconds = ms.coerceAtLeast(0) / 1000
     return "%02d:%02d".format(seconds / 60, seconds % 60)
+}
+
+internal fun sourceDisplayName(sourceId: String): String = when (sourceId) {
+    "qurango-streams" -> "Qurango"
+    "mp3quran-v3" -> "MP3Quran"
+    "quran-foundation" -> "Quran Foundation"
+    else -> sourceId
 }
