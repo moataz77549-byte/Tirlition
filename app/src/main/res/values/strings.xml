@@ -67,4 +67,22 @@
     <string name="free_recording">تسجيل حر</string>
     <string name="recording_description">سيتم حفظ الصوت القادم من البث على جهازك.</string>
     <string name="cancel_recording">إلغاء التسجيل</string>
+<string name="download_progress">تنزيل %1$d%%</string>
+<string name="download_surah">تنزيل السورة</string>
+<string name="download_selected">تنزيل المحدد (%1$d)</string>
+<string name="download_mushaf">تحميل المصحف كاملًا</string>
+<string name="download_confirm">تنزيل %1$d سورة. الحجم المتوقع: %2$s. المساحة المتاحة: %3$s</string>
+<string name="download_unknown">غير معروف</string>
+<string name="download_pause">إيقاف مؤقت</string>
+<string name="download_resume">استئناف</string>
+<string name="download_cancel">إلغاء التنزيل</string>
+<string name="download_delete">حذف من الجهاز</string>
+<string name="download_retry">إعادة المحاولة</string>
+<string name="download_wifi_only">التنزيل عبر Wi-Fi فقط</string>
+<string name="downloaded_content">المحتوى المحمل</string>
+<string name="storage_usage">التلاوات: %1$s · التسجيلات: %2$s · المتاح: %3$s</string>
+<string name="download_unavailable">التنزيل غير مسموح لهذا المصدر</string>
+<string name="download_waiting">بانتظار الاتصال</string>
+<string name="download_verifying">جاري التحقق</string>
+<string name="download_partial">%1$d / %2$d سورة محملة</string>
 </resources>

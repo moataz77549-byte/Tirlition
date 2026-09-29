@@ -32,6 +32,8 @@ class CatalogViewModel @Inject constructor(
     private val sources: SourceRepository,
     private val validator: StreamValidator,
     private val playback: PlaybackController,
+    private val downloads: com.rateel.app.download.RateelDownloadManager,
+    private val network: com.rateel.app.core.network.NetworkStatusProvider,
     private val recorder: StreamRecorder,
     private val favoritesDao: FavoriteDao,
     @ApplicationContext private val context: Context,
@@ -127,6 +129,16 @@ class CatalogViewModel @Inject constructor(
         else favoritesDao.delete("radio", id)
     }
 
+    fun downloadSurah(track: SurahAudio) = viewModelScope.launch { downloads.enqueue(track, null) }
+    fun downloadTracks(tracks: List<SurahAudio>) = viewModelScope.launch { downloads.enqueueBatch(tracks, null) }
+    val downloadRows = downloads.downloads
+    val downloadableSources = sources.observeSources().map { catalog ->
+        catalog.filter { source ->
+            com.rateel.app.domain.model.SourceRightsPolicy.evaluate(source, RightsAction.DOWNLOAD).allowed &&
+                com.rateel.app.domain.model.SourceRightsPolicy.evaluate(source, RightsAction.OFFLINE_PLAYBACK).allowed
+        }.map { it.id }.toSet()
+    }
+    suspend fun freeStorageBytes(): Long = downloads.freeBytes()
     fun playSurah(id: String) = viewModelScope.launch {
         val mushafId = id.substringBeforeLast(':', "")
         val tracks = audio.observeTracks(mushafId).first().sortedBy { it.surahNumber }
@@ -138,6 +150,13 @@ class CatalogViewModel @Inject constructor(
             source, ContentAsset(source.id, host, source.id),
         )
         if (!capabilities.canStream) return@launch
-        playback.playQueue(tracks.map { it.toPlaybackItem(null, null, capabilities) }, start)
+        val online = network.isOnline.first()
+        val queue = tracks.mapNotNull { track ->
+            val local = downloads.localUri(track.id)
+            if (local == null && (!online || !capabilities.canStream)) null
+            else track.toPlaybackItem(null, null, capabilities).copy(localUri = local)
+        }
+        val position = queue.indexOfFirst { it.id == id }
+        if (position >= 0) playback.playQueue(queue, position)
     }
 }

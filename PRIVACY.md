@@ -1,0 +1,3 @@
+# Privacy — Rateel Beta
+
+Rateel retrieves station and recitation metadata and audio from the content providers named in SOURCES_AND_RIGHTS.md. Requests reveal ordinary network data such as IP address and client headers to those providers. Favorites, listening history, playback progress, permitted audio downloads and permitted radio recordings are stored on the device. App-private downloads and recordings are excluded from Android backup. No account, location, contacts, microphone recording, advertising ID or cloud upload is implemented in this version. Recordings and downloads are not exported to another app without an explicit rights-supported feature. See the source policies for each provider's handling of their network requests.

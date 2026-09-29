@@ -123,6 +123,8 @@ fun SurahDetailRoute(id: String, onBack: () -> Unit, vm: CatalogViewModel = hilt
     val flow = remember(mushafId) { vm.tracks(mushafId) }
     val tracks by flow.collectAsStateWithLifecycle(initialValue = emptyList())
     val track = tracks.firstOrNull { it.id == id }
+    val downloads by vm.downloadRows.collectAsStateWithLifecycle(initialValue = emptyList())
+    val eligible by vm.downloadableSources.collectAsStateWithLifecycle(initialValue = emptySet())
     Scaffold(topBar = { TopAppBar(title = { Text(stringResource(R.string.surahs)) },
         navigationIcon = { IconButton(onClick = onBack) {
             Icon(Icons.AutoMirrored.Outlined.ArrowBack, contentDescription = stringResource(R.string.back))
@@ -132,6 +134,12 @@ fun SurahDetailRoute(id: String, onBack: () -> Unit, vm: CatalogViewModel = hilt
             track?.let {
                 Text("${stringResource(R.string.sources_and_rights)}: ${it.sourceId}")
                 Button(onClick = { vm.playSurah(id) }) { Text(stringResource(R.string.play)) }
+                if (it.sourceId in eligible) {
+                    val row = downloads.firstOrNull { entry -> entry.contentId == id }
+                    if (row == null || row.status !in setOf("QUEUED", "DOWNLOADING", "VERIFYING", "COMPLETED"))
+                        TextButton(onClick = { vm.downloadSurah(it) }) { Text(stringResource(R.string.download_surah)) }
+                    else Text(row.status)
+                } else Text(stringResource(R.string.download_unavailable))
             }
         }
     }
@@ -184,13 +192,32 @@ fun SurahsRoute(id: String, onBack: () -> Unit, onSurah: (String) -> Unit,
     val flow = remember(id) { vm.tracks(id) }
     val rows by flow.collectAsStateWithLifecycle(initialValue = emptyList())
     val error by vm.error.collectAsStateWithLifecycle()
+    val downloads by vm.downloadRows.collectAsStateWithLifecycle(initialValue = emptyList())
+    val eligible by vm.downloadableSources.collectAsStateWithLifecycle(initialValue = emptySet())
+    var freeBytes by remember { mutableLongStateOf(0L) }
+    LaunchedEffect(Unit) { freeBytes = vm.freeStorageBytes() }
+    var selected by remember(id) { mutableStateOf(setOf<String>()) }
+    var confirm by remember { mutableStateOf(false) }
+    if (confirm) AlertDialog(onDismissRequest = { confirm = false },
+        title = { Text(stringResource(R.string.download_mushaf)) },
+        text = { Text(stringResource(R.string.download_confirm, rows.size,
+            readable(rows.mapNotNull { it.fileSizeBytes }.takeIf { it.size == rows.size }?.sum()), readable(freeBytes))) },
+        confirmButton = { TextButton(onClick = { vm.downloadTracks(rows); confirm = false }) { Text(stringResource(R.string.download_mushaf)) } },
+        dismissButton = { TextButton(onClick = { confirm = false }) { Text(stringResource(R.string.cancel)) } })
     LaunchedEffect(id) { vm.refreshTracks(id) }
     CatalogListScaffold(stringResource(R.string.surahs), onBack) {
         error?.let { item { Text(stringResource(it.messageRes())) } }
         if (rows.isEmpty()) item { Text(stringResource(R.string.home_empty)) }
+        if (rows.isNotEmpty() && rows.all { it.sourceId in eligible }) {
+            item { Button(onClick = { confirm = true }) { Text(stringResource(R.string.download_mushaf)) } }
+            item { if (selected.isNotEmpty()) Button(onClick = { vm.downloadTracks(rows.filter { it.id in selected }); selected = emptySet() }) {
+                Text(stringResource(R.string.download_selected, selected.size)) } }
+        }
         items(rows, key = { it.id }) { track: SurahAudio ->
             ListItem(headlineContent = { Text("${track.surahNumber}. ${track.surahNameArabic}") },
-                supportingContent = { Text(track.sourceId) },
+                supportingContent = { Text("${track.sourceId} · ${downloads.firstOrNull { it.contentId == track.id }?.status ?: ""}") },
+                trailingContent = { if (track.sourceId in eligible)
+                    Checkbox(selected = track.id in selected, onCheckedChange = { checked -> selected = if (checked) selected + track.id else selected - track.id }) },
                 modifier = Modifier.fillMaxWidth().clickable { onSurah(track.id) })
         }
     }

@@ -19,6 +19,7 @@ import com.rateel.app.data.local.PlaybackProgressDao
 import com.rateel.app.data.local.ListeningHistoryDao
 import com.rateel.app.data.local.FavoriteDao
 import com.rateel.app.data.local.RecordingDao
+import com.rateel.app.data.local.DownloadDao
 import com.rateel.app.data.remote.Mp3QuranV3DataSource
 import com.rateel.app.data.remote.QuranAudioRemoteDataSource
 import com.rateel.app.data.remote.RadioRemoteDataSource
@@ -73,6 +74,7 @@ object AppModule {
     @Provides fun playbackProgressDao(db: RateelDatabase): PlaybackProgressDao = db.playbackProgressDao()
     @Provides fun listeningHistoryDao(db: RateelDatabase): ListeningHistoryDao = db.listeningHistoryDao()
     @Provides fun favoriteDao(db: RateelDatabase): FavoriteDao = db.favoriteDao()
+    @Provides fun downloadDao(db: RateelDatabase): DownloadDao = db.downloadDao()
     @Provides fun recordingDao(db: RateelDatabase): RecordingDao = db.recordingDao()
 
     @Provides

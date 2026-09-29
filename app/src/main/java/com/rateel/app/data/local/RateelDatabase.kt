@@ -71,6 +71,7 @@ interface MushafDao {
 interface AudioTrackDao {
     @Query("SELECT * FROM audio_tracks WHERE mushafId = :mushafId ORDER BY surahNumber")
     fun observeByMushaf(mushafId: String): Flow<List<AudioTrackEntity>>
+    @Query("SELECT * FROM audio_tracks WHERE id = :id LIMIT 1") suspend fun getById(id: String): AudioTrackEntity?
     @Upsert
     suspend fun upsertAll(items: List<AudioTrackEntity>)
 }
@@ -106,7 +107,7 @@ interface CacheMetadataDao {
         CacheMetadataEntity::class,
         LocalRecordingEntity::class,
     ],
-    version = 3,
+    version = 4,
     exportSchema = true,
 )
 abstract class RateelDatabase : RoomDatabase() {
@@ -120,6 +121,7 @@ abstract class RateelDatabase : RoomDatabase() {
     abstract fun playbackProgressDao(): PlaybackProgressDao
     abstract fun listeningHistoryDao(): ListeningHistoryDao
     abstract fun favoriteDao(): FavoriteDao
+    abstract fun downloadDao(): DownloadDao
     abstract fun recordingDao(): RecordingDao
 }
 
@@ -163,4 +165,18 @@ interface RecordingDao {
     suspend fun rename(id: String, title: String)
     @Query("DELETE FROM recordings WHERE id = :id")
     suspend fun delete(id: String)
+}
+
+@Dao
+interface DownloadDao {
+    @Query("SELECT * FROM downloads ORDER BY updatedAt DESC") fun observeAll(): Flow<List<DownloadEntity>>
+    @Query("SELECT * FROM downloads WHERE contentId = :contentId LIMIT 1") suspend fun byContent(contentId: String): DownloadEntity?
+    @Query("SELECT * FROM downloads WHERE id = :id LIMIT 1") suspend fun get(id: String): DownloadEntity?
+    @Query("SELECT * FROM downloads WHERE mushafId = :id") suspend fun byMushaf(id: String): List<DownloadEntity>
+    @Query("SELECT * FROM downloads WHERE status IN ('QUEUED','WAITING_FOR_NETWORK','DOWNLOADING','VERIFYING')") suspend fun pending(): List<DownloadEntity>
+    @Upsert suspend fun upsert(item: DownloadEntity)
+    @Query("UPDATE downloads SET status = :status, updatedAt = :now WHERE id = :id") suspend fun status(id: String, status: String, now: Long)
+    @Query("UPDATE downloads SET bytesDownloaded = :bytes, totalBytes = :total, updatedAt = :now WHERE id = :id AND status = 'DOWNLOADING'")
+    suspend fun progressIfDownloading(id: String, bytes: Long, total: Long?, now: Long)
+    @Query("DELETE FROM downloads WHERE id = :id") suspend fun remove(id: String)
 }
