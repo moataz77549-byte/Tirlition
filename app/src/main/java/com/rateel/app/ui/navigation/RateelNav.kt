@@ -47,7 +47,7 @@ fun RateelApp() {
     val navController = rememberNavController()
     val backStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = backStackEntry?.destination?.route
-        val secondaryRoutes = setOf("settings", "sources-rights", "about")
+    val secondaryRoutes = setOf("settings", "sources-rights", "about", "privacy", "storage")
 
     Scaffold(
         bottomBar = {
@@ -128,13 +128,19 @@ fun RateelApp() {
                 )
             }
             composable(Destination.DOWNLOADS.route) { DownloadsRoute() }
-            composable(Destination.LIBRARY.route) { LibraryRoute(onSurah = { navController.navigate("surah/${Uri.encode(it)}") }) }
+            composable(Destination.LIBRARY.route) { LibraryRoute(
+                onSurah = { navController.navigate("surah/${Uri.encode(it)}") },
+                onRadio = { navController.navigate("radio/${Uri.encode(it)}") }) }
             composable("settings") {
-                SettingsRoute(onSources = { navController.navigate("sources-rights") },
+                SettingsRoute(onPrivacy = { navController.navigate("privacy") },
+                    onStorage = { navController.navigate("storage") },
                     onAbout = { navController.navigate("about") })
             }
             composable("about") { AboutRoute(onBack = { navController.popBackStack() },
-                onSources = { navController.navigate("sources-rights") }) }
+                onSources = { navController.navigate("sources-rights") },
+                onPrivacy = { navController.navigate("privacy") }) }
+            composable("privacy") { PrivacyRoute(onBack = { navController.popBackStack() }) }
+            composable("storage") { StorageRoute(onBack = { navController.popBackStack() }) }
             composable("sources-rights") {
                 SourcesAndRightsRoute(onBack = { navController.popBackStack() })
             }

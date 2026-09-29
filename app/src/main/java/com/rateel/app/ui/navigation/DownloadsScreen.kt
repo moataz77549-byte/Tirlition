@@ -8,11 +8,18 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.foundation.clickable
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.rateel.app.R
 import com.rateel.app.data.local.DownloadEntity
 import com.rateel.app.feature.download.DownloadsViewModel
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.outlined.ArrowBack
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 
 fun readable(bytes: Long?): String = bytes?.let { "%.1f MB".format(it / 1048576.0) } ?: "—"
 
@@ -24,6 +31,7 @@ fun DownloadsRoute(vm: DownloadsViewModel = hiltViewModel()) {
     val usage by vm.storage.collectAsStateWithLifecycle()
     val error by vm.error.collectAsStateWithLifecycle()
     var pendingDelete by remember { mutableStateOf<String?>(null) }
+    var expandedGroup by remember { mutableStateOf<String?>(null) }
     pendingDelete?.let { mushaf ->
         val group = rows.filter { it.mushafId == mushaf && it.status == "COMPLETED" }
         AlertDialog(onDismissRequest = { pendingDelete = null },
@@ -34,25 +42,61 @@ fun DownloadsRoute(vm: DownloadsViewModel = hiltViewModel()) {
     }
     LaunchedEffect(rows) { vm.refreshStorage() }
     Scaffold(topBar = { TopAppBar(title = { Text(stringResource(R.string.downloads)) }) }) { padding ->
-        LazyColumn(Modifier.padding(padding), contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            item { Row { Text(stringResource(R.string.download_wifi_only), Modifier.weight(1f)); Switch(wifi, vm::wifiOnly) } }
-            item { Text(stringResource(R.string.storage_usage, readable(usage.first), readable(usage.second), readable(usage.third))) }
+        LazyColumn(Modifier.padding(padding), contentPadding = rateelListPadding, verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            item { Card { Row(Modifier.fillMaxWidth().padding(16.dp),
+                verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
+                Text(stringResource(R.string.download_wifi_only), Modifier.weight(1f)); Switch(wifi, vm::wifiOnly) } } }
+            item { Text(stringResource(R.string.storage_usage, readable(usage.first), readable(usage.second), readable(usage.third)),
+                style = MaterialTheme.typography.bodySmall) }
             error?.let { item { Text(stringResource(when (it) {
                 "NO_SPACE" -> R.string.download_no_space
                 "PLAYBACK_BUSY" -> R.string.download_playback_busy
                 else -> R.string.download_error
             }), color = MaterialTheme.colorScheme.error) } }
-            if (rows.isEmpty()) item { Text(stringResource(R.string.home_empty)) }
+            if (rows.isEmpty()) item { RateelQuietCard(stringResource(R.string.downloads_empty),
+                stringResource(R.string.audio_mushafs)) }
             val groups = rows.filter { it.mushafId != null }.groupBy { it.mushafId!! }
-            groups.forEach { (mushaf, group) ->
-                item(key = "group:$mushaf") {
-                    Text(mushaf, style = MaterialTheme.typography.titleMedium)
-                    Text(stringResource(R.string.download_partial, group.count { it.status == "COMPLETED" }, group.size))
-                    TextButton(onClick = { pendingDelete = mushaf }) { Text(stringResource(R.string.download_delete)) }
+            val units = groups.map { (id, tracks) -> id to tracks } +
+                rows.filter { it.mushafId == null }.map { it.id to listOf(it) }
+            val sections = listOf(R.string.downloads_active_section, R.string.downloads_waiting_section,
+                R.string.downloads_failed_section, R.string.downloads_completed_section)
+            sections.forEach { heading ->
+                val matching = units.filter { (_, tracks) -> when {
+                    tracks.any { it.status in setOf("DOWNLOADING", "VERIFYING", "QUEUED") } ->
+                        heading == R.string.downloads_active_section
+                    tracks.any { it.status in setOf("WAITING_FOR_NETWORK", "PAUSED") } ->
+                        heading == R.string.downloads_waiting_section
+                    tracks.any { it.status in setOf("FAILED", "MISSING_FILE", "EXPIRED", "CANCELLED") } ->
+                        heading == R.string.downloads_failed_section
+                    else -> heading == R.string.downloads_completed_section
+                } }
+                if (matching.isNotEmpty()) item(key = "heading:$heading") { RateelSectionTitle(stringResource(heading)) }
+                matching.forEach { (id, tracks) ->
+                    if (tracks.first().mushafId == null) {
+                        item(key = "track:$id:$heading") { DownloadCard(tracks.first(), vm) }
+                    } else {
+                        item(key = "group:$id:$heading") {
+                            Card(Modifier.fillMaxWidth().clickable {
+                                expandedGroup = if (expandedGroup == id) null else id
+                            }) { Column(Modifier.padding(16.dp)) {
+                                Text(stringResource(R.string.audio_mushafs), style = MaterialTheme.typography.titleMedium)
+                                Text(stringResource(R.string.mushaf_download_summary,
+                                    tracks.count { it.status == "COMPLETED" }, tracks.size,
+                                    readable(tracks.sumOf { it.bytesDownloaded })))
+                                Text(sourceDisplayName(tracks.first().sourceId),
+                                    style = MaterialTheme.typography.bodySmall)
+                                TextButton(onClick = { expandedGroup = if (expandedGroup == id) null else id }) {
+                                    Text(stringResource(R.string.mushaf_download_details)) }
+                                if (tracks.any { it.status == "COMPLETED" })
+                                    TextButton(onClick = { pendingDelete = id }) {
+                                        Text(stringResource(R.string.download_delete_mushaf)) }
+                            } }
+                        }
+                        if (expandedGroup == id) items(tracks, key = { "detail:${it.id}:$heading" }) {
+                            DownloadCard(it, vm) }
+                    }
                 }
-                items(group, key = { it.id }) { DownloadCard(it, vm) }
             }
-            items(rows.filter { it.mushafId == null }, key = { it.id }) { DownloadCard(it, vm) }
         }
     }
 }
@@ -61,7 +105,9 @@ fun DownloadsRoute(vm: DownloadsViewModel = hiltViewModel()) {
 private fun DownloadCard(row: DownloadEntity, vm: DownloadsViewModel) {
     val percent = row.totalBytes?.takeIf { it > 0 }?.let { (row.bytesDownloaded * 100 / it).toInt().coerceIn(0, 100) }
     Card(Modifier.fillMaxWidth()) { Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-        Text("${row.surahNumber ?: ""} · ${row.sourceId}")
+        Text(row.surahNumber?.let { stringResource(R.string.download_track_title, it) }
+            ?: stringResource(R.string.audio_mushafs), style = MaterialTheme.typography.titleMedium)
+        Text(sourceDisplayName(row.sourceId), style = MaterialTheme.typography.bodySmall)
         val statusText = when (row.status) {
             "QUEUED" -> R.string.download_queued
             "WAITING_FOR_NETWORK" -> R.string.download_waiting
@@ -76,7 +122,8 @@ private fun DownloadCard(row: DownloadEntity, vm: DownloadsViewModel) {
             else -> R.string.download_error
         }
         Text(stringResource(statusText))
-        if (percent != null) LinearProgressIndicator(progress = { percent / 100f }, modifier = Modifier.fillMaxWidth())
+        if (percent != null) LinearProgressIndicator(progress = { percent / 100f },
+            modifier = Modifier.fillMaxWidth().semantics { contentDescription = "$percent%" })
         Text("${percent?.let { "$it% · " }.orEmpty()}${readable(row.bytesDownloaded)} / ${readable(row.totalBytes)}")
         Row {
             when (row.status) {
@@ -88,4 +135,22 @@ private fun DownloadCard(row: DownloadEntity, vm: DownloadsViewModel) {
             if (row.status == "COMPLETED") TextButton(onClick = { vm.delete(row) }) { Text(stringResource(R.string.download_delete)) }
         }
     } }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun StorageRoute(onBack: () -> Unit, vm: DownloadsViewModel = hiltViewModel()) {
+    val usage by vm.storage.collectAsStateWithLifecycle()
+    LaunchedEffect(Unit) { vm.refreshStorage() }
+    Scaffold(topBar = { TopAppBar(title = { Text(stringResource(R.string.storage)) },
+        navigationIcon = { IconButton(onClick = onBack) {
+            Icon(Icons.AutoMirrored.Outlined.ArrowBack, contentDescription = stringResource(R.string.back))
+        } }) }) { padding ->
+        Column(Modifier.padding(padding).padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            RateelQuietCard(stringResource(R.string.storage_quran), readable(usage.first))
+            RateelQuietCard(stringResource(R.string.storage_recordings), readable(usage.second))
+            RateelQuietCard(stringResource(R.string.storage_free), readable(usage.third))
+            Text(stringResource(R.string.storage_cache_unknown), style = MaterialTheme.typography.bodySmall)
+        }
+    }
 }
