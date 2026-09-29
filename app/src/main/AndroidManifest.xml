@@ -16,5 +16,14 @@
 <provider android:name="androidx.startup.InitializationProvider" android:authorities="${applicationId}.androidx-startup" android:exported="false" tools:node="merge" xmlns:tools="http://schemas.android.com/tools">
 <meta-data android:name="androidx.work.WorkManagerInitializer" tools:node="remove"/>
 </provider>
+<provider
+    android:name="androidx.core.content.FileProvider"
+    android:authorities="${applicationId}.fileprovider"
+    android:exported="false"
+    android:grantUriPermissions="true">
+    <meta-data
+        android:name="android.support.FILE_PROVIDER_PATHS"
+        android:resource="@xml/file_paths" />
+</provider>
 <service android:name="androidx.work.impl.foreground.SystemForegroundService" android:foregroundServiceType="dataSync" tools:node="merge" xmlns:tools="http://schemas.android.com/tools"/>
 </application></manifest>

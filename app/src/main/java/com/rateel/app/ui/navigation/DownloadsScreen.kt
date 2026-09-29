@@ -31,12 +31,49 @@ fun DownloadsRoute(vm: DownloadsViewModel = hiltViewModel()) {
             text = { Text(stringResource(R.string.download_delete_confirm, group.size, readable(group.mapNotNull { it.fileSizeBytes }.sum()))) },
             confirmButton = { TextButton(onClick = { vm.deleteMushaf(mushaf); pendingDelete = null }) { Text(stringResource(R.string.download_delete)) } },
             dismissButton = { TextButton(onClick = { pendingDelete = null }) { Text(stringResource(R.string.cancel)) } })
+    var pendingDeleteAll by remember { mutableStateOf(false) }
+    if (pendingDeleteAll) {
+        AlertDialog(
+            onDismissRequest = { pendingDeleteAll = false },
+            title = { Text(stringResource(R.string.download_delete_all)) },
+            text = { Text(stringResource(R.string.download_delete_all_confirm)) },
+            confirmButton = {
+                TextButton(onClick = { vm.deleteAll(); pendingDeleteAll = false }) {
+                    Text(stringResource(R.string.download_delete))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { pendingDeleteAll = false }) {
+                    Text(stringResource(R.string.cancel))
+                }
+            }
+        )
     }
     LaunchedEffect(rows) { vm.refreshStorage() }
     Scaffold(topBar = { TopAppBar(title = { Text(stringResource(R.string.downloads)) }) }) { padding ->
         LazyColumn(Modifier.padding(padding), contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            item { Row { Text(stringResource(R.string.download_wifi_only), Modifier.weight(1f)); Switch(wifi, vm::wifiOnly) } }
-            item { Text(stringResource(R.string.storage_usage, readable(usage.first), readable(usage.second), readable(usage.third))) }
+            item {
+                Card(Modifier.fillMaxWidth()) {
+                    Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Row(verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
+                            Text(stringResource(R.string.download_wifi_only), Modifier.weight(1f))
+                            Switch(wifi, vm::wifiOnly)
+                        }
+                        Text(
+                            stringResource(R.string.storage_usage, readable(usage.first), readable(usage.second), readable(usage.third)),
+                            style = MaterialTheme.typography.bodyMedium,
+                        )
+                        if (rows.any { it.status == "COMPLETED" }) {
+                            TextButton(
+                                onClick = { pendingDeleteAll = true },
+                                colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error),
+                            ) {
+                                Text(stringResource(R.string.download_delete_all))
+                            }
+                        }
+                    }
+                }
+            }
             error?.let { item { Text(stringResource(when (it) {
                 "NO_SPACE" -> R.string.download_no_space
                 "PLAYBACK_BUSY" -> R.string.download_playback_busy

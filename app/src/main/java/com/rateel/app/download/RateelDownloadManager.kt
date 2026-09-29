@@ -98,6 +98,11 @@ class RateelDownloadManager @Inject constructor(
         check(rows.none { it.localUri != null && playback.state.value.currentItem?.localUri == it.localUri }) { "PLAYBACK_BUSY" }
         rows.forEach { delete(it.id) }
     }
+    suspend fun deleteAll() {
+        val rows = dao.observeAll().first()
+        check(rows.none { it.localUri != null && playback.state.value.currentItem?.localUri == it.localUri }) { "PLAYBACK_BUSY" }
+        rows.forEach { delete(it.id) }
+    }
     suspend fun localUri(contentId: String): String? {
         val row = dao.byContent(contentId) ?: return null
         if (row.status != "COMPLETED") return null

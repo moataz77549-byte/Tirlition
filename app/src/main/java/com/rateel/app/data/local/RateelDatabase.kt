@@ -143,6 +143,8 @@ interface ListeningHistoryDao {
     @Upsert suspend fun upsert(item: ListeningHistoryEntity)
     @Query("UPDATE listening_history SET playedDurationMs = playedDurationMs + :delta WHERE id = (SELECT id FROM listening_history WHERE contentType = 'audio' AND contentId = :itemId ORDER BY playedAt DESC LIMIT 1)")
     suspend fun addPlayDuration(itemId: String, delta: Long)
+    @Query("DELETE FROM listening_history")
+    suspend fun clearAll()
 }
 
 @Dao
@@ -154,6 +156,8 @@ interface FavoriteDao {
     @Insert(onConflict = OnConflictStrategy.IGNORE) suspend fun insert(item: FavoriteEntity)
     @Query("DELETE FROM favorites WHERE contentType = :type AND contentId = :id")
     suspend fun delete(type: String, id: String)
+    @Query("DELETE FROM favorites")
+    suspend fun clearAll()
 }
 
 @Dao
@@ -183,4 +187,5 @@ interface DownloadDao {
     @Query("UPDATE downloads SET status = 'FAILED', failureReason = 'INTEGRITY_CHECK_FAILED', updatedAt = :now WHERE id = :id")
     suspend fun corrupt(id: String, now: Long)
     @Query("DELETE FROM downloads WHERE id = :id") suspend fun remove(id: String)
+    @Query("DELETE FROM downloads") suspend fun clearAll()
 }
