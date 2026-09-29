@@ -74,6 +74,16 @@ fun FullPlayerRoute(onBack: () -> Unit, vm: PlayerViewModel = hiltViewModel()) {
     var timerDialog by remember { mutableStateOf(false) }
     var recordingDialog by remember { mutableStateOf(false) }
     var sourceDialog by remember { mutableStateOf(false) }
+    var speedDialog by remember { mutableStateOf(false) }
+    if (speedDialog) AlertDialog(
+        onDismissRequest = { speedDialog = false },
+        title = { Text(stringResource(R.string.playback_speed)) },
+        text = { Column { listOf(0.75f, 1f, 1.25f, 1.5f, 1.75f, 2f).forEach { speed ->
+            TextButton(onClick = { vm.setPlaybackSpeed(speed); speedDialog = false }) {
+                Text("${speed}x") }
+        } } },
+        confirmButton = {},
+    )
     if (sourceDialog && item != null) AlertDialog(onDismissRequest = { sourceDialog = false },
         title = { Text(stringResource(R.string.content_info)) },
         text = { Text(stringResource(R.string.source_info, sourceDisplayName(item.sourceId))) },
@@ -161,6 +171,17 @@ fun FullPlayerRoute(onBack: () -> Unit, vm: PlayerViewModel = hiltViewModel()) {
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     TextButton(onClick = { timerDialog = true }) { Text(stringResource(R.string.sleep_timer)) }
                     TextButton(onClick = { sourceDialog = true }) { Text(stringResource(R.string.content_info)) }
+                }
+                if (!item.isLive) Row(Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween) {
+                    TextButton(onClick = { speedDialog = true }) {
+                        Text("${stringResource(R.string.playback_speed)}: ${state.playbackSpeed}x") }
+                    TextButton(onClick = vm::toggleRepeatMode) {
+                        Text("${stringResource(R.string.repeat_mode)}: " + stringResource(when (state.repeatMode) {
+                            1 -> R.string.repeat_one
+                            2 -> R.string.repeat_all
+                            else -> R.string.repeat_off
+                        })) }
                 }
                 if (item.capabilities.requiresAttribution)
                     Text(stringResource(R.string.source_info, sourceDisplayName(item.sourceId)),

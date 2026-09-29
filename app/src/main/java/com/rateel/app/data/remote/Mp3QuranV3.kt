@@ -45,10 +45,13 @@ object Mp3QuranAudioUrlResolver {
     fun resolve(server: String, surahNumber: Int): String? {
         if (surahNumber !in 1..114) return null
         val url = server.trim()
-        if (!url.startsWith("https://", ignoreCase = true)) return null
-        val host = runCatching { java.net.URI(url).host?.lowercase() }.getOrNull() ?: return null
+        val normalizedUrl = if (url.startsWith("http://", ignoreCase = true)) {
+            "https://" + url.substring(7)
+        } else url
+        if (!normalizedUrl.startsWith("https://", ignoreCase = true)) return null
+        val host = runCatching { java.net.URI(normalizedUrl).host?.lowercase() }.getOrNull() ?: return null
         if (host != "mp3quran.net" && !host.endsWith(".mp3quran.net")) return null
-        return url.trimEnd('/') + "/" + surahNumber.toString().padStart(3, '0') + ".mp3"
+        return normalizedUrl.trimEnd('/') + "/" + surahNumber.toString().padStart(3, '0') + ".mp3"
     }
 }
 
@@ -56,8 +59,10 @@ internal fun availableSurahs(list: String): Set<Int> =
     list.split(',').mapNotNull { it.trim().toIntOrNull()?.takeIf { number -> number in 1..114 } }.toSet()
 
 private fun safeAudioUrl(url: String): Boolean =
-    runCatching { java.net.URI(url).scheme?.lowercase() == "https" &&
-        !java.net.URI(url).host.isNullOrBlank() }.getOrDefault(false)
+    runCatching {
+        val scheme = java.net.URI(url).scheme?.lowercase()
+        (scheme == "https" || scheme == "http") && !java.net.URI(url).host.isNullOrBlank()
+    }.getOrDefault(false)
 
 @Singleton
 class Mp3QuranV3DataSource @Inject constructor(

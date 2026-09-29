@@ -138,4 +138,20 @@
 <string name="about_storage_link">Manage storage</string>
 <string name="library_empty">Saved and recently played content will appear here.</string>
 <string name="all">All</string>
+    <string name="playback_speed">Speed</string>
+    <string name="repeat_mode">Repeat</string>
+    <string name="repeat_off">Repeat off</string>
+    <string name="repeat_one">Repeat surah</string>
+    <string name="repeat_all">Repeat all</string>
+    <string name="download_delete_all">Delete all downloads</string>
+    <string name="download_delete_all_confirm">Are you sure you want to delete all downloads and free up storage space?</string>
+    <string name="share">Share</string>
+    <string name="clear_history">Clear history</string>
+    <string name="clear_history_confirm">Are you sure you want to clear your listening history?</string>
+    <string name="clear_favorites">Clear favorites</string>
+    <string name="clear_favorites_confirm">Are you sure you want to remove all favorite items?</string>
+    <string name="no_history">No listening history yet</string>
+    <string name="no_favorites">No favorites yet</string>
+    <string name="continue_listening">Continue listening</string>
+    <string name="remove">Remove</string>
 </resources>

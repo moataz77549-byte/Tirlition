@@ -15,6 +15,8 @@ data class UnifiedPlaybackState(
     val error: String? = null,
     val queue: List<PlaybackItem> = emptyList(),
     val currentIndex: Int = -1,
+    val playbackSpeed: Float = 1.0f,
+    val repeatMode: Int = 0,
 )
 
 interface PlaybackController {

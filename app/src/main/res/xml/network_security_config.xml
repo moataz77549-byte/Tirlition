@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<network-security-config>
+    <!-- Enforce HTTPS by default for security -->
+    <base-config cleartextTrafficPermitted="false">
+        <trust-anchors>
+            <certificates src="system" />
+        </trust-anchors>
+    </base-config>
+
+    <!-- Permit cleartext HTTP for Quran audio stream servers that lack SSL -->
+    <domain-config cleartextTrafficPermitted="true">
+        <domain includeSubdomains="true">mp3quran.net</domain>
+        <domain includeSubdomains="true">qurango.net</domain>
+        <domain includeSubdomains="true">holol.com</domain>
+    </domain-config>
+</network-security-config>

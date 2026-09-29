@@ -25,7 +25,8 @@ class StreamValidator @Inject constructor(private val client: OkHttpClient) {
     suspend fun check(url: String): StreamValidation = withContext(Dispatchers.IO) {
         val now = System.currentTimeMillis()
         val host = runCatching { URI(url).host }.getOrNull()
-        if (host.isNullOrBlank() || !url.startsWith("https://", ignoreCase = true)) {
+        val isHttpScheme = url.startsWith("https://", ignoreCase = true) || url.startsWith("http://", ignoreCase = true)
+        if (host.isNullOrBlank() || !isHttpScheme) {
             return@withContext StreamValidation(StreamHealth.BLOCKED, url, null, null, null, now)
         }
         try {
@@ -34,13 +35,12 @@ class StreamValidator @Inject constructor(private val client: OkHttpClient) {
                 val resolvedHost = response.request.url.host
                 val type = response.header("Content-Type")?.substringBefore(';')?.trim()?.lowercase()
                 val health = when {
-                    response.request.url.scheme != "https" -> StreamHealth.BLOCKED
-                    response.code == 405 || response.code == 501 -> StreamHealth.UNKNOWN
+                    response.code == 405 || response.code == 501 -> StreamHealth.ONLINE // Many Icecast/Shoutcast radios reject HEAD but stream fine via GET
                     !response.isSuccessful -> StreamHealth.OFFLINE
                     type == "text/html" -> StreamHealth.BLOCKED
                     type?.startsWith("audio/") == true ||
-                        type in setOf("application/vnd.apple.mpegurl", "application/x-mpegurl") -> StreamHealth.ONLINE
-                    else -> StreamHealth.UNKNOWN
+                        type in setOf("application/vnd.apple.mpegurl", "application/x-mpegurl", "application/octet-stream") -> StreamHealth.ONLINE
+                    else -> StreamHealth.ONLINE
                 }
                 StreamValidation(health, url, resolved, resolvedHost, type, now)
             }

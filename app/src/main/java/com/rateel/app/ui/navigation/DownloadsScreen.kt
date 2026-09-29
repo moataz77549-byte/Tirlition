@@ -32,6 +32,16 @@ fun DownloadsRoute(vm: DownloadsViewModel = hiltViewModel()) {
     val error by vm.error.collectAsStateWithLifecycle()
     var pendingDelete by remember { mutableStateOf<String?>(null) }
     var expandedGroup by remember { mutableStateOf<String?>(null) }
+    var pendingDeleteAll by remember { mutableStateOf(false) }
+    if (pendingDeleteAll) AlertDialog(
+        onDismissRequest = { pendingDeleteAll = false },
+        title = { Text(stringResource(R.string.download_delete_all)) },
+        text = { Text(stringResource(R.string.download_delete_all_confirm)) },
+        confirmButton = { TextButton(onClick = { vm.deleteAll(); pendingDeleteAll = false }) {
+            Text(stringResource(R.string.download_delete)) } },
+        dismissButton = { TextButton(onClick = { pendingDeleteAll = false }) {
+            Text(stringResource(R.string.cancel)) } },
+    )
     pendingDelete?.let { mushaf ->
         val group = rows.filter { it.mushafId == mushaf && it.status == "COMPLETED" }
         AlertDialog(onDismissRequest = { pendingDelete = null },
@@ -48,6 +58,11 @@ fun DownloadsRoute(vm: DownloadsViewModel = hiltViewModel()) {
                 Text(stringResource(R.string.download_wifi_only), Modifier.weight(1f)); Switch(wifi, vm::wifiOnly) } } }
             item { Text(stringResource(R.string.storage_usage, readable(usage.first), readable(usage.second), readable(usage.third)),
                 style = MaterialTheme.typography.bodySmall) }
+            if (rows.any { it.status == "COMPLETED" }) item {
+                TextButton(onClick = { pendingDeleteAll = true },
+                    colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error)) {
+                    Text(stringResource(R.string.download_delete_all)) }
+            }
             error?.let { item { Text(stringResource(when (it) {
                 "NO_SPACE" -> R.string.download_no_space
                 "PLAYBACK_BUSY" -> R.string.download_playback_busy

@@ -138,4 +138,20 @@
     <string name="about_storage_link">إدارة التخزين</string>
     <string name="library_empty">سيظهر ما تحفظه وتستمع إليه هنا.</string>
     <string name="all">الكل</string>
+    <string name="playback_speed">السرعة</string>
+    <string name="repeat_mode">التكرار</string>
+    <string name="repeat_off">بدون تكرار</string>
+    <string name="repeat_one">تكرار السورة</string>
+    <string name="repeat_all">تكرار الكل</string>
+    <string name="download_delete_all">حذف كافة التنزيلات</string>
+    <string name="download_delete_all_confirm">هل أنت متأكد من حذف كافة التنزيلات وتحرير المساحة؟</string>
+    <string name="share">مشاركة</string>
+    <string name="clear_history">مسح السجل</string>
+    <string name="clear_history_confirm">هل تريد مسح سجل الاستماع بالكامل؟</string>
+    <string name="clear_favorites">مسح المفضلة</string>
+    <string name="clear_favorites_confirm">هل تريد مسح كافة العناصر من المفضلة؟</string>
+    <string name="no_history">لا يوجد سجل استماع بعد</string>
+    <string name="no_favorites">لا توجد عناصر في المفضلة</string>
+    <string name="continue_listening">استئناف الاستماع</string>
+    <string name="remove">إزالة</string>
 </resources>

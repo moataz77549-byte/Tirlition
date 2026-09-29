@@ -1,6 +1,9 @@
 package com.rateel.app.feature.library
 
 import android.content.Context
+import android.content.Intent
+import android.net.Uri
+import androidx.core.content.FileProvider
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.rateel.app.data.local.FavoriteDao
@@ -12,7 +15,6 @@ import com.rateel.app.domain.model.ContentCapabilities
 import com.rateel.app.domain.model.PlaybackItem
 import com.rateel.app.domain.model.PlaybackType
 import com.rateel.app.domain.model.SourceRightsStatus
-import com.rateel.app.domain.repository.RadioRepository
 import com.rateel.app.playback.PlaybackController
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -25,10 +27,9 @@ import kotlinx.coroutines.launch
 @HiltViewModel
 class LibraryViewModel @Inject constructor(
     private val dao: RecordingDao,
-    historyDao: ListeningHistoryDao,
-    favoriteDao: FavoriteDao,
+    private val historyDao: ListeningHistoryDao,
+    private val favoriteDao: FavoriteDao,
     downloadManager: RateelDownloadManager,
-    radioRepository: RadioRepository,
     private val player: PlaybackController,
     @ApplicationContext private val context: Context,
 ) : ViewModel() {
@@ -36,7 +37,6 @@ class LibraryViewModel @Inject constructor(
     val history = historyDao.observeRecent().stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
     val favorites = favoriteDao.observeAll().stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
     val downloads = downloadManager.downloads.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
-    val radios = radioRepository.observeRadios().stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
     private fun file(item: LocalRecordingEntity): File? {
         val directory = File(context.filesDir, "recordings").canonicalFile
         return runCatching { File(item.filePath).canonicalFile }.getOrNull()
@@ -63,5 +63,33 @@ class LibraryViewModel @Inject constructor(
         val entry = dao.get(id) ?: return@launch
         val local = file(entry)
         if (local == null || local.delete()) dao.delete(id)
+    }
+    fun clearHistory() = viewModelScope.launch {
+        historyDao.clearAll()
+    }
+    fun clearFavorites() = viewModelScope.launch {
+        favoriteDao.clearAll()
+    }
+    fun removeFavorite(type: String, id: String) = viewModelScope.launch {
+        favoriteDao.delete(type, id)
+    }
+    fun createShareIntent(id: String): Intent? {
+        val entry = recordings.value.firstOrNull { it.id == id } ?: return null
+        val local = file(entry) ?: return null
+        val uri = runCatching {
+            FileProvider.getUriForFile(
+                context,
+                "${context.packageName}.fileprovider",
+                local,
+            )
+        }.getOrNull() ?: Uri.fromFile(local)
+
+        return Intent(Intent.ACTION_SEND).apply {
+            type = entry.mimeType.ifBlank { "audio/*" }
+            putExtra(Intent.EXTRA_STREAM, uri)
+            putExtra(Intent.EXTRA_SUBJECT, entry.title)
+            putExtra(Intent.EXTRA_TEXT, entry.title)
+            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+        }
     }
 }
