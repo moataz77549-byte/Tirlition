@@ -30,6 +30,23 @@ jobs:
         run: gradle compileReleaseKotlin --stacktrace
       - name: Build unsigned release candidate
         run: gradle assembleRelease --stacktrace
+      - name: Check live MP3Quran catalog
+        run: |
+          set -euo pipefail
+          curl -fLsS --retry 2 --connect-timeout 10 --max-time 45 \
+            'https://mp3quran.net/api/v3/radios?language=ar' -o /tmp/rateel-radios.json
+          curl -fLsS --retry 2 --connect-timeout 10 --max-time 45 \
+            'https://mp3quran.net/api/v3/reciters?language=ar' -o /tmp/rateel-reciters.json
+          python3 - <<'PY'
+          import json
+          with open('/tmp/rateel-radios.json') as f:
+              radios = json.load(f).get('radios', [])
+          with open('/tmp/rateel-reciters.json') as f:
+              reciters = json.load(f).get('reciters', [])
+          print(f'Live catalog: {len(radios)} radios, {len(reciters)} reciters')
+          if not radios or not reciters:
+              raise SystemExit('Empty live catalog')
+          PY
       - name: Stage unsigned candidate and signing tools
         run: |
           mkdir -p signing-tools/lib
