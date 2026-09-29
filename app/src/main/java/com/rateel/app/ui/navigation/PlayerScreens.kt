@@ -9,6 +9,8 @@ import androidx.compose.material.icons.outlined.PlayArrow
 import androidx.compose.material.icons.outlined.SkipNext
 import androidx.compose.material.icons.outlined.SkipPrevious
 import androidx.compose.material.icons.outlined.Stop
+import androidx.compose.material.icons.outlined.Radio
+import androidx.compose.material.icons.outlined.LibraryMusic
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -23,6 +25,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.rateel.app.R
 import com.rateel.app.feature.player.PlayerViewModel
 import com.rateel.app.playback.PlaybackStatus
+import coil3.compose.AsyncImage
 
 @Composable
 fun MiniPlayer(onOpen: () -> Unit, vm: PlayerViewModel) {
@@ -38,6 +41,12 @@ fun MiniPlayer(onOpen: () -> Unit, vm: PlayerViewModel) {
         ListItem(
             headlineContent = { Text(item.title, maxLines = 1) },
             supportingContent = { Text(if (item.isLive) stringResource(R.string.live) else item.subtitle.orEmpty()) },
+            leadingContent = {
+                if (item.artwork != null) AsyncImage(model = item.artwork, contentDescription = null,
+                    modifier = Modifier.size(48.dp))
+                else Icon(if (item.isLive) Icons.Outlined.Radio else Icons.Outlined.LibraryMusic,
+                    contentDescription = null, modifier = Modifier.size(40.dp))
+            },
             modifier = Modifier.fillMaxWidth().clickable(onClick = onOpen),
             trailingContent = {
                 IconButton(onClick = vm::toggle) {
@@ -80,9 +89,21 @@ fun FullPlayerRoute(onBack: () -> Unit, vm: PlayerViewModel = hiltViewModel()) {
         if (item != null) {
             Column(Modifier.fillMaxSize().padding(padding).padding(24.dp),
                 verticalArrangement = Arrangement.spacedBy(18.dp)) {
+                item.artwork?.let { artwork ->
+                    AsyncImage(model = artwork, contentDescription = null, modifier = Modifier.size(200.dp))
+                } ?: Icon(if (item.isLive) Icons.Outlined.Radio else Icons.Outlined.LibraryMusic,
+                    contentDescription = null, modifier = Modifier.size(160.dp))
+                }
                 Text(item.title, style = MaterialTheme.typography.headlineMedium)
                 item.subtitle?.let { Text(it, style = MaterialTheme.typography.titleMedium) }
-                Text(if (item.isLive) stringResource(R.string.live) else state.status.name)
+                if (item.isLive) Text(stringResource(R.string.live))
+                if (state.status == PlaybackStatus.BUFFERING ||
+                    state.status == PlaybackStatus.PREPARING ||
+                    state.status == PlaybackStatus.RECONNECTING) {
+                    CircularProgressIndicator()
+                    Text(stringResource(if (state.status == PlaybackStatus.RECONNECTING)
+                        R.string.reconnecting else R.string.buffering))
+                }
                 if (!item.isLive && state.durationMs != null) {
                     Slider(
                         value = state.positionMs.toFloat().coerceIn(0f, state.durationMs!!.toFloat()),

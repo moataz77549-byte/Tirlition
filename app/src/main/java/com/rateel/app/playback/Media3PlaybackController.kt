@@ -59,20 +59,24 @@ class Media3PlaybackController @Inject constructor(
                 pending?.invoke(connected)
                 pending = null
                 if (connected.mediaItemCount == 0) scope.launch {
-                    val preferences = settings.preferences.first()
-                    val id = preferences.lastPlaybackItemId
-                    if (preferences.autoResume && id != null && connected.mediaItemCount == 0) {
-                        val item = restorer.resolve(id)
-                        if (item != null && connected.mediaItemCount == 0) {
-                            restored = true
-                            items = listOf(item)
-                            connected.setMediaItem(PlaybackMediaItemMapper.toMediaItem(item))
-                            if (!item.isLive) {
-                                val saved = kotlinx.coroutines.withContext(Dispatchers.IO) { progressDao.get(id) }
-                                if (saved != null && !saved.completed) connected.seekTo(saved.positionMs)
+                    try {
+                        val preferences = settings.preferences.first()
+                        val id = preferences.lastPlaybackItemId
+                        if (preferences.autoResume && id != null && connected.mediaItemCount == 0) {
+                            val item = restorer.resolve(id)
+                            if (item != null && connected.mediaItemCount == 0) {
+                                restored = true
+                                items = listOf(item)
+                                connected.setMediaItem(PlaybackMediaItemMapper.toMediaItem(item))
+                                if (!item.isLive) {
+                                    val saved = kotlinx.coroutines.withContext(Dispatchers.IO) { progressDao.get(id) }
+                                    if (saved != null && !saved.completed) connected.seekTo(saved.positionMs)
+                                }
+                                update(connected)
                             }
-                            update(connected)
                         }
+                    } catch (error: Exception) {
+                        if (error is kotlinx.coroutines.CancellationException) throw error
                     }
                 }
             }.onFailure {
@@ -109,7 +113,12 @@ class Media3PlaybackController @Inject constructor(
             scope.launch {
                 val item = items[startIndex]
                 if (!item.isLive) {
-                    val saved = kotlinx.coroutines.withContext(Dispatchers.IO) { progressDao.get(item.id) }
+                    val saved = try {
+                        kotlinx.coroutines.withContext(Dispatchers.IO) { progressDao.get(item.id) }
+                    } catch (error: Exception) {
+                        if (error is kotlinx.coroutines.CancellationException) throw error
+                        null
+                    }
                     if (saved != null && !saved.completed) player.seekTo(saved.positionMs)
                 }
                 player.prepare()

@@ -1,6 +1,7 @@
 package com.rateel.app.playback
 
 import android.content.Intent
+import android.util.Log
 import androidx.media3.common.AudioAttributes
 import androidx.media3.common.C
 import androidx.media3.common.Player
@@ -103,20 +104,25 @@ class UnifiedPlaybackService : MediaSessionService() {
                 if (item.mediaMetadata.extras?.getBoolean("rateel.isLive") != true) return
                 retryJob?.cancel()
                 retryJob = scope.launch {
-                    // Resolve by stable station ID so a changed stream URL is never persisted forever.
-                    runCatching { radios.refresh() }
-                    val endpoints = radios.observeRadios().first()
-                        .firstOrNull { it.id == item.mediaId }?.streams.orEmpty()
-                    val decision = failover.next(endpoints.size) ?: return@launch
-                    delay(decision.delayMs)
-                    if (exo.currentMediaItem?.mediaId != item.mediaId) return@launch
-                    val selected = endpoints[decision.endpointIndex]
-                    val replacement = item.buildUpon().setUri(selected.url)
-                        .setMimeType(if (selected.format == "hls" || selected.format == "m3u8")
-                            "application/x-mpegURL" else null).build()
-                    exo.replaceMediaItem(exo.currentMediaItemIndex, replacement)
-                    exo.prepare()
-                    exo.play()
+                    try {
+                        // Resolve by stable station ID so a changed stream URL is never persisted forever.
+                        runCatching { radios.refresh() }
+                        val endpoints = radios.observeRadios().first()
+                            .firstOrNull { it.id == item.mediaId }?.streams.orEmpty()
+                        val decision = failover.next(endpoints.size) ?: return@launch
+                        delay(decision.delayMs)
+                        if (exo.currentMediaItem?.mediaId != item.mediaId) return@launch
+                        val selected = endpoints[decision.endpointIndex]
+                        val replacement = item.buildUpon().setUri(selected.url)
+                            .setMimeType(if (selected.format == "hls" || selected.format == "m3u8")
+                                "application/x-mpegURL" else null).build()
+                        exo.replaceMediaItem(exo.currentMediaItemIndex, replacement)
+                        exo.prepare()
+                        exo.play()
+                    } catch (error: Exception) {
+                        if (error is kotlinx.coroutines.CancellationException) throw error
+                        Log.w("RateelPlayback", "reconnect_failed")
+                    }
                 }
             }
         })
